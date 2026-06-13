@@ -17,7 +17,7 @@ mypy==1.8
  
 # --- Jupyter ---
 ipykernel==6.29.5
-ipython==8.0.0
+ipython==8.30.0
 jupyterlab==4.3.4
  
 # --- FastAPI (app/) ---
