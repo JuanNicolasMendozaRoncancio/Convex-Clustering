@@ -1,4 +1,4 @@
-from .algoritihms import (
+from .algorithms import (
     ConvexClusterer,
     ADMM,
     AMA,
