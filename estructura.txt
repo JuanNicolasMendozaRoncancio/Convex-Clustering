@@ -1,0 +1,28 @@
+CONVEX CLUSTERING/
+│
+├── src/
+│   └── convex_clustering/
+│       ├── __init__.py       ← from .algorithms import ConvexClusterer, ADMM, AMA, DR
+│       │                        from .regression import RFS, FastRFS, Boosting
+│       │
+│       ├── algorithms.py     ← class ADMM, class AMA, class DR (implementaciones)
+│       │                        class ConvexClusterer (fachada pública, sklearn-compatible)
+│       │
+│       ├── regression.py     ← class RFS, class FastRFS, sus variantes
+│       │                        class Boosting (fit/predict, sklearn-compatible)
+│       │
+│       ├── utils.py          ← load_dataset, make_experiment_id, set_seed
+│       |                         build_similarity_graph + sus helpers privados (_...)
+│       |                         compute_metrics, save_results
+│       └── viz.py            ← Visualization tools
+│                                
+├── tests/
+├── notebooks/
+├── app/
+├── .github/workflows/
+├── pyproject.toml
+├── requirements.txt
+├── environment.yml
+├── run_experiments.sh
+├── docker-compose.yml
+└── README.md
