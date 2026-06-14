@@ -661,6 +661,10 @@ class ConvexClusterer(BaseEstimator, ClusterMixin):
 
         U_final, history, centers_hist = self._run_experiment(X, W)
 
+        if self.algorithm in ("ADMM", "AMA"):
+            U_final = U_final.T
+            centers_hist = {k: v.T for k, v in centers_hist.items()}
+
         self.cluster_centers_ = U_final
         self.history_ = history
         self.centers_hist_ = centers_hist
