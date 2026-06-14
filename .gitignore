@@ -16,3 +16,8 @@ dist/
 .ipynb_checkpoints/
 
 .vscode/
+
+notebooks/
+notebooktest.ipynb
+
+Master_Andes_v1.pdf
