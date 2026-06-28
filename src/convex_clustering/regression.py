@@ -37,6 +37,64 @@ def _normalize_sparse(X, y):
 
     return X, y
 
+def rfs_sparse(X, y, delta, epsilon, numiter):
+    """
+    RF-S algorithm for linear regression (dense and sparse data).
+
+    Parameters
+    ----------
+        X : array-like, shape (p, n), data matrix with p features and n samples.
+        y : array-like, shape (n,), target vector.
+        delta : float, regularization parameter. Must satisfy 0 < epsilon < delta.
+        epsilon : float, learning rate. Must satisfy 0 < epsilon < delta.
+        numiter : int, number of iterations.
+
+    Returns
+    -------
+        b : ndarray, shape (p,), regression coefficients.
+    """
+    if epsilon <= 0:
+        raise ValueError("epsilon must be positive.")
+    if delta <= 0:
+        raise ValueError("delta must be positive.")
+    if epsilon >= delta:
+        raise ValueError("epsilon must be less than delta.")
+    
+
+    X = X.T
+    X, y = _normalize_sparse(X, y)
+
+    n = X.shape[1]  # X es (p, n)
+    b = np.zeros(X.shape[0], dtype=np.float64)  # (p,)
+    r = y.copy()
+
+    for _ in range(numiter):
+        # Correlacion entre columnas de X^T (filas de X) y residuo
+        # X es (p, n), r es (n,) → X @ r es (p,)
+        if issparse(X):
+            corr = np.abs(X @ r)
+            if issparse(corr):
+                corr = corr.A.ravel()
+        else:
+            corr = np.abs(X @ r)
+
+        j_k = np.argmax(corr)
+
+        # Extraer columna j_k de X — shape (n,)
+        x_j = X[j_k, :]
+        if issparse(x_j):
+            x_j = x_j.A.ravel()
+        else:
+            x_j = np.asarray(x_j).ravel()
+
+        s = np.sign(np.dot(x_j, r))
+
+        r -= epsilon * (s * x_j + (1.0 / delta) * (r - y))
+        b *= (1.0 - epsilon / delta)
+        b[j_k] += epsilon * s
+
+    return b
+
 def fastrfs_sparse(X, y, delta, epsilon, numiter):
     """
     Implements the Fast RF-S algorithm with sparce data
