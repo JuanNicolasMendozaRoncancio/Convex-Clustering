@@ -5,7 +5,11 @@
 
 
 #Imports
+from __future__ import annotations
+
 import numpy as np
+import numpy.typing as npt
+from typing import Any
 from scipy.sparse import kron
 from scipy.sparse.linalg import factorized
 from sklearn.preprocessing import normalize
@@ -19,9 +23,20 @@ from scipy.sparse import coo_matrix, identity, csr_matrix
 from .regression import fastrfs_sparse
 from .utils import construct_Weighted_Laplacian, built_edges, compute_B_penal
 
+_AlgoResult = tuple[
+    npt.NDArray[np.float64],
+    dict[int, float],
+    dict[int, npt.NDArray[np.float64]],
+]
 
-
-def ADMM(X, W, gamma, nu=1,max_iter=1000, tol=1e-5, verbose=False):
+def ADMM(X: npt.NDArray[np.float64], 
+         W: npt.NDArray[np.float64], 
+         gamma: float, 
+         nu: float=1,
+         max_iter: int=1000, 
+         tol: float=1e-5, 
+         verbose: bool=False
+         ) -> _AlgoResult:
     """
     ADMM algorithm for convex clustering.
 
@@ -41,7 +56,6 @@ def ADMM(X, W, gamma, nu=1,max_iter=1000, tol=1e-5, verbose=False):
         history : dict, containing the history of the difference on centers.
         U_history : dict, containing the history of the centers at each iteration. 
     """
-
     X = X.T
     edges, weights = built_edges(W)
 
@@ -61,8 +75,8 @@ def ADMM(X, W, gamma, nu=1,max_iter=1000, tol=1e-5, verbose=False):
 
     lhs = np.eye(n, dtype=np.float64) + E @ E.T  
 
-    history = {0: 0.0}
-    U_hist = {}
+    history: dict[int, float] = {0: 0.0}
+    U_hist: dict[int, npt.NDArray[np.float64]] = {}
     U = X.copy()
     U_hist[0] = U.copy()
     prev_U = U.copy()                    
@@ -70,14 +84,13 @@ def ADMM(X, W, gamma, nu=1,max_iter=1000, tol=1e-5, verbose=False):
     for it in range(1, max_iter + 1):
         V_bar = V + lambda_ / nu
         rhs = X + V_bar @ E.T                     
-        U = np.linalg.solve(lhs, rhs.T).T        
+        U = np.linalg.solve(lhs, rhs.T).T.astype(np.float64)        
 
         U_hist[it] = U.copy()
 
         
         diff_U = U @ E                            
         diff = diff_U - lambda_ / nu
-
        
         norms = np.linalg.norm(diff, axis=0)     
         tau_vec = gamma * weights / nu            
@@ -87,7 +100,7 @@ def ADMM(X, W, gamma, nu=1,max_iter=1000, tol=1e-5, verbose=False):
         
         lambda_ += nu * (V - diff_U)
 
-        diff_iterations = np.max(np.linalg.norm(U - prev_U, axis=0))
+        diff_iterations: float = float(np.max(np.linalg.norm(U - prev_U, axis=0)))
         history[it] = diff_iterations
 
         if verbose and it % 50 == 0:
@@ -103,7 +116,14 @@ def ADMM(X, W, gamma, nu=1,max_iter=1000, tol=1e-5, verbose=False):
     return U, dict(list(history.items())[2:]), U_hist
 
 
-def AMA(X, W, gamma, nu, max_iter=1000, tol=1e-5,verbose=False):
+def AMA(    X: npt.NDArray[np.float64],
+    W: npt.NDArray[np.float64],
+    gamma: float,
+    nu: float,
+    max_iter: int = 1000,
+    tol: float = 1e-5,
+    verbose: bool = False,
+) -> _AlgoResult:
     """
     AMA algorithm for convex clustering.
 
@@ -123,7 +143,6 @@ def AMA(X, W, gamma, nu, max_iter=1000, tol=1e-5,verbose=False):
         history : dict, containing the history of the difference on centers.
         Centers_history : dict, containing the history of the centers at each iteration.
     """
-
     X = X.T
     p, _ = X.shape
 
@@ -142,12 +161,12 @@ def AMA(X, W, gamma, nu, max_iter=1000, tol=1e-5,verbose=False):
     col_i = np.repeat(edges_array[:, 0], p)            
     col_j = np.repeat(edges_array[:, 1], p)             
 
-    history = {0: 0.0}
+    history: dict[int, float] = {0: 0.0}
     U_prev = X.copy()
     U_curr = X.copy()
 
 
-    Centers_history = {0: X.copy()}
+    Centers_history: dict[int, npt.NDArray[np.float64]] = {0: X.copy()}
     for it in range(1, max_iter + 1):
 
         Delta = np.zeros_like(X, dtype=np.float64)
@@ -170,7 +189,7 @@ def AMA(X, W, gamma, nu, max_iter=1000, tol=1e-5,verbose=False):
 
         Centers_history[it] = U_curr.copy()
         if it > 10:
-            diff_iterations = np.max(np.linalg.norm(U_curr - U_prev, axis=0))
+            diff_iterations: float = float(np.max(np.linalg.norm(U_curr - U_prev, axis=0)))
             history[it] = diff_iterations
 
             if verbose and it % 50 == 0:
@@ -186,7 +205,14 @@ def AMA(X, W, gamma, nu, max_iter=1000, tol=1e-5,verbose=False):
     return U_curr, dict(list(history.items())[2:]), Centers_history
 
 
-def dr_primal(X, W, gamma, rho, max_iter=1000, tol=1e-5):
+def dr_primal(
+    X: npt.NDArray[np.float64],
+    W: npt.NDArray[np.float64],
+    gamma: float,
+    rho: float,
+    max_iter: int = 1000,
+    tol: float = 1e-5,
+) -> _AlgoResult:
     """
     DR algorithm for convex clustering.
 
@@ -205,7 +231,6 @@ def dr_primal(X, W, gamma, rho, max_iter=1000, tol=1e-5):
         history : dict, containing the history of the difference on centers.
         U_hist : dict, containing the history of the centers at each iteration.
     """
-
     n, p = X.shape
 
     L = csr_matrix(construct_Weighted_Laplacian(W)).tocsc()
@@ -221,7 +246,7 @@ def dr_primal(X, W, gamma, rho, max_iter=1000, tol=1e-5):
     rhs_buffer = np.empty_like(X)
 
     U_k = X.copy()
-    history = {0: 0.0}
+    history: dict[int, float] = {0: 0.0}
 
     for it in range(1, max_iter + 1):
         U_hist_arr[it][:] = alpha_X
@@ -236,7 +261,7 @@ def dr_primal(X, W, gamma, rho, max_iter=1000, tol=1e-5):
         U_k -= A_new
         U_k += hat_A_k
 
-        error = np.linalg.norm(U_hist_arr[it] - U_hist_arr[it - 1])
+        error: float = float(np.linalg.norm(U_hist_arr[it] - U_hist_arr[it - 1]))
         history[it] = error
 
         if it > 10:
@@ -249,14 +274,20 @@ def dr_primal(X, W, gamma, rho, max_iter=1000, tol=1e-5):
 
 
     num_stored = it + 1
-    U_hist = {kk: U_hist_arr[kk] for kk in range(num_stored)}
+    U_hist: dict[int, npt.NDArray[np.float64]] = {kk: U_hist_arr[kk] for kk in range(num_stored)}
 
     U_final = U_hist_arr[it]
 
     return U_final,  dict(list(history.items())[2:]), U_hist
 
 
-def centers_rfs_l2(X, W, gamma=10, epsilon=0.01, numiter=5000):
+def centers_rfs_l2(
+    X: npt.NDArray[np.float64],
+    W: npt.NDArray[np.float64],
+    gamma: float = 10,
+    epsilon: float = 0.01,
+    numiter: int = 5000,
+) -> _AlgoResult:    
     """
     Applies the FRFS algorithm for convex clustering.
 
@@ -274,13 +305,14 @@ def centers_rfs_l2(X, W, gamma=10, epsilon=0.01, numiter=5000):
         history : dict, containing the history of the difference on centers.
         Centers_hist : dict, containing the history of the centers at each iteration.
     """
-    
-    
     n, p = X.shape
 
     _, penalty = compute_B_penal(W, X, gamma)
     edges, _ = built_edges(W)
     num_edges = len(edges)
+
+    history: dict[int, float] = {0: 0.0}
+    centers_hist: dict[int, npt.NDArray[np.float64]] = {}
 
     if num_edges == 0 or penalty == 0:
         return X.copy(), history, centers_hist
@@ -293,7 +325,7 @@ def centers_rfs_l2(X, W, gamma=10, epsilon=0.01, numiter=5000):
     gamma_mat = (X_c[edges_arr[:, 0]] - X_c[edges_arr[:, 1]]) / np.sqrt(2.0)
     alpha_mat = (epsilon / penalty) * gamma_mat
 
-    incident = [[] for _ in range(n)]
+    incident: list[list[tuple[int, float]]] = [[] for _ in range(n)]
     for k in range(num_edges):
         i, j = edges[k]
         incident[i].append((k, 1.0))
@@ -335,11 +367,11 @@ def centers_rfs_l2(X, W, gamma=10, epsilon=0.01, numiter=5000):
 
         centers *= factor
         centers += shift
-        delta_c = epsilon * s_k / np.sqrt(2.0)
+        delta_c: float = float(epsilon * s_k / np.sqrt(2.0))
         centers[i, g] -= delta_c
         centers[j, g] += delta_c
 
-        error = np.linalg.norm(centers - centers_hist_arr[k - 1]) if k > 0 else 0
+        error: float = float(np.linalg.norm(centers - centers_hist_arr[k - 1])) if k > 0 else 0.0
         history[k] = error
 
         centers_hist_arr[k] = centers
@@ -354,7 +386,13 @@ def centers_rfs_l2(X, W, gamma=10, epsilon=0.01, numiter=5000):
     return U_final, dict(list(history.items())[2:]), centers_hist
 
 
-def centers_fast_rfs_l2(X,W,gammas=None, epsilon = 0.01, numiter = 10000):
+def centers_fast_rfs_l2(
+    X: npt.NDArray[np.float64],
+    W: npt.NDArray[np.float64],
+    gammas: list[float] | None = None,
+    epsilon: float = 0.01,
+    numiter: int = 10000,
+) -> _AlgoResult:    
     """
     Applies the Fast RF-S algorithm for convex clustering.
 
@@ -372,12 +410,11 @@ def centers_fast_rfs_l2(X,W,gammas=None, epsilon = 0.01, numiter = 10000):
         History: dict, containing the history of the objective function values at each iteration.
         Center_hist: dict, containing the history of the centers at each iteration.
     """
-
     if gammas is None:
         gammas = [10]
     
-    center_hist = {0: X.copy()}
-    history = {}
+    center_hist: dict[int, npt.NDArray[np.float64]] = {0: X.copy()}
+    history: dict[int, float] = {}
     for i, gamma in enumerate(gammas):
             
         B, penalty = compute_B_penal(W, X, gamma)
@@ -390,14 +427,21 @@ def centers_fast_rfs_l2(X,W,gammas=None, epsilon = 0.01, numiter = 10000):
         centers = X - (Bnorm @ b).reshape(X.shape[0], X.shape[1])
 
         center_hist[i] = centers
-        history[i] = np.linalg.norm(center_hist[i] - center_hist[i-1]) if i > 0 else 0.0
+        history[i] = float(np.linalg.norm(center_hist[i] - center_hist[i - 1])) if i > 0 else 0.0
 
     U_final = list(center_hist.values())[-1]
 
     return U_final, dict(list(history.items())[2:]), center_hist
 
 
-def centers_rfs_l1(X, W, gamma, epsilon=0.01, cauchy=1e-5, M=1000):
+def centers_rfs_l1(
+    X: npt.NDArray[np.float64],
+    W: npt.NDArray[np.float64],
+    gamma: float,
+    epsilon: float = 0.01,
+    cauchy: float = 1e-5,
+    M: int = 1000,
+) -> _AlgoResult:    
     """
     Applies the RF-S algorithm for convex clustering with L1 norm.
 
@@ -416,15 +460,14 @@ def centers_rfs_l1(X, W, gamma, epsilon=0.01, cauchy=1e-5, M=1000):
         history : dict, containing the history of the difference on centers.
         U_hist : dict, containing the history of the centers at each iteration.
     """
-    
     n, p = X.shape
 
     edges, weights = built_edges(W)
     q = len(edges)
 
-    rows = []
-    cols = []
-    data = []
+    rows: list[int] = []
+    cols: list[int] = []
+    data: list[float] = []
     for k, (i, j) in enumerate(edges):
         rows.extend([i, j])
         cols.extend([k, k])
@@ -437,8 +480,8 @@ def centers_rfs_l1(X, W, gamma, epsilon=0.01, cauchy=1e-5, M=1000):
     R = X.copy()                    
     Beta_mat = np.zeros((q, p))   
 
-    U_hist = {0: X.copy()}
-    history = {0: 0.0}
+    U_hist: dict[int, npt.NDArray[np.float64]] = {0: X.copy()}
+    history: dict[int, float] = {0: 0.0}
 
     for m in range(M):
         edge_grad = b_B_T @ R                          
@@ -466,7 +509,14 @@ def centers_rfs_l1(X, W, gamma, epsilon=0.01, cauchy=1e-5, M=1000):
     return final_centers, dict(list(history.items())[2:]), U_hist
 
 
-def centers_fast_rfs_l1(X, W, gamma, epsilon=0.01, cauchy=1e-5, M=1000):
+def centers_fast_rfs_l1(
+    X: npt.NDArray[np.float64],
+    W: npt.NDArray[np.float64],
+    gamma: float,
+    epsilon: float = 0.01,
+    cauchy: float = 1e-5,
+    M: int = 1000,
+) -> _AlgoResult:    
     """
     Applies the Fast RF-S algorithm for convex clustering with L1 norm.
     
@@ -485,7 +535,6 @@ def centers_fast_rfs_l1(X, W, gamma, epsilon=0.01, cauchy=1e-5, M=1000):
         History: dict, containing the history of the difference on centers.
         U_hist : dict, containing the history of the centers at each iteration.    
     """
-
     n, p = X.shape
   
     edges, weights = built_edges(W)
@@ -536,8 +585,8 @@ def centers_fast_rfs_l1(X, W, gamma, epsilon=0.01, cauchy=1e-5, M=1000):
 
         if m > 0:
             diff = U_hist[m + 1] - U_hist[m]   # calculamos la diferencia solo una vez
-            U_diff1 = np.max(np.linalg.norm(diff, axis=1))
-            U_diff2 = np.linalg.norm(diff, ord='fro')
+            U_diff1: float = float(np.max(np.linalg.norm(diff, axis=1)))
+            U_diff2: float = float(np.linalg.norm(diff, ord='fro'))
             history[m + 1] = U_diff1
             if (U_diff1 < cauchy) or (U_diff2 < cauchy):
                 print(f"Convergencia alcanzada en la iteración {m + 1}")
@@ -548,7 +597,7 @@ def centers_fast_rfs_l1(X, W, gamma, epsilon=0.01, cauchy=1e-5, M=1000):
     return U_final, dict(list(history.items())[2:]), U_hist
 
 
-class ConvexClusterer(BaseEstimator, ClusterMixin):
+class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
     """
     Convex clustering via ADMM, AMA, Douglas-Rachford, or RF-S variants.
  
@@ -610,15 +659,15 @@ class ConvexClusterer(BaseEstimator, ClusterMixin):
     })
 
     def __init__(
-            self,
-            algorithm= "ADMM",
-            gamma = 1,
-            step_size = 0.01,
-            max_iter = 1000,
-            tol = 1e-5,
-            verbose = False,
-            merge_tol = 1e-5
-    ):
+        self,
+        algorithm: str = "ADMM",
+        gamma: float = 1.0,
+        step_size: float = 0.01,
+        max_iter: int = 1000,
+        tol: float = 1e-5,
+        verbose: bool = False,
+        merge_tol: float = 1e-5,
+    ) -> None:
         self.algorithm = algorithm
         self.gamma = gamma
         self.step_size = step_size
@@ -628,7 +677,12 @@ class ConvexClusterer(BaseEstimator, ClusterMixin):
         self.merge_tol = merge_tol
 
 
-    def fit(self, X, W, y =None):
+    def fit(
+        self,
+        X: npt.NDArray[np.float64],
+        W: npt.NDArray[np.float64],
+        y: None = None,
+    ) -> ConvexClusterer:
         """
         Fit the convex clustering model.
  
@@ -665,15 +719,19 @@ class ConvexClusterer(BaseEstimator, ClusterMixin):
             U_final = U_final.T
             centers_hist = {k: v.T for k, v in centers_hist.items()}
 
-        self.cluster_centers_ = U_final
-        self.history_ = history
-        self.centers_hist_ = centers_hist
-        self.n_iter_ = len(history)
-        self.labels_ = self._extract_labels(U_final)
+        self.cluster_centers_: npt.NDArray[np.float64] = U_final
+        self.history_: dict[int, float] = history
+        self.centers_hist_: dict[int, npt.NDArray[np.float64]] = centers_hist
+        self.n_iter_: int = len(history)
+        self.labels_: npt.NDArray[np.int_] = self._extract_labels(U_final)
 
         return self
     
-    def _run_experiment(self, X, W):
+    def _run_experiment(
+        self,
+        X: npt.NDArray[np.float64],
+        W: npt.NDArray[np.float64],
+    ) -> _AlgoResult:        
         """
         Dispatch to the selected algorithm with unified parameter mapping.
  
@@ -725,7 +783,14 @@ class ConvexClusterer(BaseEstimator, ClusterMixin):
                                         cauchy = self.tol, 
                                         M = self.max_iter)
         
-    def fit_predict(self, X, W, y=None):
+        raise ValueError(f"Unreachable: unknown algorithm {algo}")  # pragma: no cover
+
+    def fit_predict(
+        self,
+        X: npt.NDArray[np.float64],
+        W: npt.NDArray[np.float64],
+        y: None = None,
+    ) -> npt.NDArray[np.int_]:        
         """
         Fit and return cluster labels.
  
@@ -742,7 +807,10 @@ class ConvexClusterer(BaseEstimator, ClusterMixin):
         return self.fit(X,W).labels_
     
         
-    def _extract_labels(self, U_final):
+    def _extract_labels(
+        self,
+        U_final: npt.NDArray[np.float64],
+    ) -> npt.NDArray[np.int_]:        
         """
         Extract cluster labels from final centers.
  
@@ -771,5 +839,5 @@ class ConvexClusterer(BaseEstimator, ClusterMixin):
         _, labels = connected_components(
                     csr_matrix(adjacency), directed=False
                 )
-        return labels
+        return labels # type: ignore[no-any-return]
 
