@@ -1,42 +1,41 @@
 name: CI
 
 on:
-    push:
-        branches: [main]
-    pull_request:
-        branches: [main]
-
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-    pytest:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
-                with:
-                    python-version: "3.11"
-                    cache: "pip"
-            - run: pip install -e ".[dev]"
-            - run: pytest tests/
-    
-    ruff:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
-                with:
-                    python-version: "3.11"
-                    cache: "pip"
-            - run: pip install ruff==0.4
-            - run: ruff check src/ tests/
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/
 
-    mypy:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v5
-                with:
-                    python-version: "3.11"
-                    cache: "pip"
-            - run: pip install -e ".[dev]"
-            - run: mypy src/convex_clustering
+  ruff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install ruff==0.4
+      - run: ruff check src/ tests/
+
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+      - run: pip install -e ".[dev]"
+      - run: mypy src/convex_clustering
