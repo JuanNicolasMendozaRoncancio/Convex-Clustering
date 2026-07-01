@@ -1,6 +1,5 @@
-import numpy as np
-
 from convex_clustering import ConvexClusterer
+import numpy as np
 
 
 def test_admm_centers(six_points, expected_centers):

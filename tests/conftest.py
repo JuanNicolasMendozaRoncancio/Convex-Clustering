@@ -1,8 +1,7 @@
+from sklearn.datasets import make_regression
+from convex_clustering.utils import knn_w
 import numpy as np
 import pytest
-from sklearn.datasets import make_regression
-
-from convex_clustering.utils import knn_w
 
 
 @pytest.fixture
