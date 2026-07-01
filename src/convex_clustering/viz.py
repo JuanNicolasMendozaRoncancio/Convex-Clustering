@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+from typing import Any
+
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-from typing import Any, Optional
-import matplotlib.pyplot as plt
 from IPython.display import HTML
 from matplotlib.animation import FuncAnimation, PillowWriter
 from matplotlib.colors import Normalize
 
 
-def plot_graph_weights(X: npt.NDArray[np.float64], 
-                       W: npt.NDArray[np.float64], 
+def plot_graph_weights(X: npt.NDArray[np.float64],
+                       W: npt.NDArray[np.float64],
                        title: str) -> None:
     """
     Plots the graph structure of the data points with edges colored by their weights.
@@ -34,10 +35,10 @@ def plot_graph_weights(X: npt.NDArray[np.float64],
                 ax.plot(
                     [X[i,0], X[j,0]],
                     [X[i,1], X[j,1]],
-                    color=plt.cm.plasma((W[i,j]-vmin)/(vmax-vmin)), 
+                    color=plt.cm.plasma((W[i,j]-vmin)/(vmax-vmin)),
                     linewidth=0.25+ 2.5 * (W[i,j]/vmax),
                     alpha=0.6,
-                    zorder=1  
+                    zorder=1
                 )
     ax.scatter(X[:,0], X[:,1], c='steelblue', s=80, zorder=3, edgecolors='white', linewidths=1)
     sm = plt.cm.ScalarMappable(cmap='plasma', norm=Normalize(vmin=vmin, vmax=vmax))
@@ -46,15 +47,15 @@ def plot_graph_weights(X: npt.NDArray[np.float64],
     ax.set_title(title)
     ax.set_xlabel('X-axis')
     ax.set_ylabel('Y-axis')
-    ax.grid(True, linestyle='--', alpha=0.3, zorder=0) 
+    ax.grid(True, linestyle='--', alpha=0.3, zorder=0)
     plt.show()
 
-def animation_save(X: npt.NDArray[np.float64], 
-                   hist_: dict[Any, npt.NDArray[np.float64]], 
-                   f: int, 
-                   title: str = "Cluster Evolution", 
-                   save_path: Optional[str] = None, 
-                   fps: int = 5, 
+def animation_save(X: npt.NDArray[np.float64],
+                   hist_: dict[Any, npt.NDArray[np.float64]],
+                   f: int,
+                   title: str = "Cluster Evolution",
+                   save_path: str | None = None,
+                   fps: int = 5,
                    Algo: str = "") -> HTML:
     """
     Creates an animation of the clustering paths and MAY save it as a GIF.
@@ -96,7 +97,7 @@ def animation_save(X: npt.NDArray[np.float64],
         frames=len(keys),
         init_func=init,
         interval=200,
-        blit=False,   
+        blit=False,
         repeat=False
     )
     if save_path is not None:

@@ -1,9 +1,11 @@
 import numpy as np
+
 from convex_clustering import ConvexClusterer
+
 
 def test_admm_centers(six_points, expected_centers):
     X, W = six_points
-    
+
     model = ConvexClusterer(
         algorithm="ADMM",
         gamma=10,
@@ -23,7 +25,7 @@ def test_admm_centers(six_points, expected_centers):
 
 def test_ama_centers(six_points, expected_centers):
     X, W = six_points
-    
+
     model = ConvexClusterer(
         algorithm="AMA",
         gamma=10,
@@ -42,7 +44,7 @@ def test_ama_centers(six_points, expected_centers):
 
 def test_DR_centers(six_points, expected_centers):
     X, W = six_points
-    
+
     model = ConvexClusterer(
         algorithm="DR",
         gamma=10,

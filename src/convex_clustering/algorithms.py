@@ -1,6 +1,6 @@
 # Here we can find the algortihms we have developed for convex clustering
 # As well as the already existing algorimths.
-# All in all we may find: ADMM, AMA, SSNAL, DR algorithm, 
+# All in all we may find: ADMM, AMA, SSNAL, DR algorithm,
 # An RF-S algorithm and a Fast RF-S algorithm with L2 norm and L1 norm.
 
 
@@ -9,19 +9,16 @@ from __future__ import annotations
 
 import numpy as np
 import numpy.typing as npt
-from typing import Any
-from scipy.sparse import kron
-from scipy.sparse.linalg import factorized
-from sklearn.preprocessing import normalize
-from sklearn.base import BaseEstimator, ClusterMixin
-from scipy.spatial.distance import pdist, squareform
+from scipy.sparse import coo_matrix, csr_matrix, identity, kron
 from scipy.sparse.csgraph import connected_components
-from scipy.sparse import coo_matrix, identity, csr_matrix
-
+from scipy.sparse.linalg import factorized
+from scipy.spatial.distance import pdist, squareform
+from sklearn.base import BaseEstimator, ClusterMixin
+from sklearn.preprocessing import normalize
 
 #Inner imports
 from .regression import fastrfs_sparse
-from .utils import construct_Weighted_Laplacian, built_edges, compute_B_penal
+from .utils import built_edges, compute_b_penal, construct_weighted_laplacian
 
 _AlgoResult = tuple[
     npt.NDArray[np.float64],
@@ -29,12 +26,12 @@ _AlgoResult = tuple[
     dict[int, npt.NDArray[np.float64]],
 ]
 
-def ADMM(X: npt.NDArray[np.float64], 
-         W: npt.NDArray[np.float64], 
-         gamma: float, 
+def admm(X: npt.NDArray[np.float64],
+         W: npt.NDArray[np.float64],
+         gamma: float,
          nu: float=1,
-         max_iter: int=1000, 
-         tol: float=1e-5, 
+         max_iter: int=1000,
+         tol: float=1e-5,
          verbose: bool=False
          ) -> _AlgoResult:
     """
@@ -73,31 +70,31 @@ def ADMM(X: npt.NDArray[np.float64],
         E[i, l] = 1.0
         E[j, l] = -1.0
 
-    lhs = np.eye(n, dtype=np.float64) + E @ E.T  
+    lhs = np.eye(n, dtype=np.float64) + E @ E.T
 
     history: dict[int, float] = {0: 0.0}
     U_hist: dict[int, npt.NDArray[np.float64]] = {}
     U = X.copy()
     U_hist[0] = U.copy()
-    prev_U = U.copy()                    
+    prev_U = U.copy()
 
     for it in range(1, max_iter + 1):
         V_bar = V + lambda_ / nu
-        rhs = X + V_bar @ E.T                     
-        U = np.linalg.solve(lhs, rhs.T).T.astype(np.float64)        
+        rhs = X + V_bar @ E.T
+        U = np.linalg.solve(lhs, rhs.T).T.astype(np.float64)
 
         U_hist[it] = U.copy()
 
-        
-        diff_U = U @ E                            
-        diff = diff_U - lambda_ / nu
-       
-        norms = np.linalg.norm(diff, axis=0)     
-        tau_vec = gamma * weights / nu            
-        coef = np.maximum(0., 1. - tau_vec / norms)  
-        V = coef[None, :] * diff                  
 
-        
+        diff_U = U @ E
+        diff = diff_U - lambda_ / nu
+
+        norms = np.linalg.norm(diff, axis=0)
+        tau_vec = gamma * weights / nu
+        coef = np.maximum(0., 1. - tau_vec / norms)
+        V = coef[None, :] * diff
+
+
         lambda_ += nu * (V - diff_U)
 
         diff_iterations: float = float(np.max(np.linalg.norm(U - prev_U, axis=0)))
@@ -116,7 +113,7 @@ def ADMM(X: npt.NDArray[np.float64],
     return U, dict(list(history.items())[2:]), U_hist
 
 
-def AMA(    X: npt.NDArray[np.float64],
+def ama(    X: npt.NDArray[np.float64],
     W: npt.NDArray[np.float64],
     gamma: float,
     nu: float,
@@ -148,18 +145,18 @@ def AMA(    X: npt.NDArray[np.float64],
 
     edges, weights = built_edges(W)
     num_edges = len(edges)
-    
+
     if num_edges == 0:
         return X.copy(), {0: 0.0}, {0: X.copy()}
 
     edges_array = np.array(edges, dtype=np.int32)
 
-    r = gamma * weights                                 
+    r = gamma * weights
     lambda_ = np.zeros((p, num_edges), dtype=np.float64)
 
-    row_indices = np.tile(np.arange(p), num_edges)      
-    col_i = np.repeat(edges_array[:, 0], p)            
-    col_j = np.repeat(edges_array[:, 1], p)             
+    row_indices = np.tile(np.arange(p), num_edges)
+    col_i = np.repeat(edges_array[:, 0], p)
+    col_j = np.repeat(edges_array[:, 1], p)
 
     history: dict[int, float] = {0: 0.0}
     U_prev = X.copy()
@@ -170,7 +167,7 @@ def AMA(    X: npt.NDArray[np.float64],
     for it in range(1, max_iter + 1):
 
         Delta = np.zeros_like(X, dtype=np.float64)
-        lambda_ravel = lambda_.ravel(order='F')         
+        lambda_ravel = lambda_.ravel(order='F')
 
         np.add.at(Delta, (row_indices, col_i), lambda_ravel)
         np.add.at(Delta, (row_indices, col_j), -lambda_ravel)
@@ -194,12 +191,12 @@ def AMA(    X: npt.NDArray[np.float64],
 
             if verbose and it % 50 == 0:
                 print(f"it {it:4d} | diff_centers {diff_iterations:.3e}")
-            
+
             if diff_iterations < tol:
                 if verbose:
                     print(f"Converged at iter {it}: diff_centers={diff_iterations:.2e}")
                 break
-        
+
         U_prev = U_curr
 
     return U_curr, dict(list(history.items())[2:]), Centers_history
@@ -233,7 +230,7 @@ def dr_primal(
     """
     n, p = X.shape
 
-    L = csr_matrix(construct_Weighted_Laplacian(W)).tocsc()
+    L = csr_matrix(construct_weighted_laplacian(W)).tocsc()
     M = gamma * L + rho * identity(X.shape[0])
     solve = factorized(M)
 
@@ -242,7 +239,7 @@ def dr_primal(
     alpha_X = alpha * X
 
     U_hist_arr = np.empty((max_iter + 1, n, p), dtype=X.dtype)
-    U_hist_arr[0] = X.copy()          
+    U_hist_arr[0] = X.copy()
     rhs_buffer = np.empty_like(X)
 
     U_k = X.copy()
@@ -251,7 +248,7 @@ def dr_primal(
     for it in range(1, max_iter + 1):
         U_hist_arr[it][:] = alpha_X
         U_hist_arr[it] += beta * U_k
-        A_new = U_hist_arr[it]                    
+        A_new = U_hist_arr[it]
 
         np.multiply(A_new, 2.0, out=rhs_buffer)
         rhs_buffer -= U_k
@@ -287,7 +284,7 @@ def centers_rfs_l2(
     gamma: float = 10,
     epsilon: float = 0.01,
     numiter: int = 5000,
-) -> _AlgoResult:    
+) -> _AlgoResult:
     """
     Applies the FRFS algorithm for convex clustering.
 
@@ -307,7 +304,7 @@ def centers_rfs_l2(
     """
     n, p = X.shape
 
-    _, penalty = compute_B_penal(W, X, gamma)
+    _, penalty = compute_b_penal(W, X, gamma)
     edges, _ = built_edges(W)
     num_edges = len(edges)
 
@@ -335,7 +332,7 @@ def centers_rfs_l2(
     incident_signs = []
     for inc in incident:
         if inc:
-            ks, sgns = zip(*inc)
+            ks, sgns = zip(*inc, strict=True)
             incident_edges.append(np.array(ks, dtype=np.int32))
             incident_signs.append(np.array(sgns, dtype=np.float64))
         else:
@@ -392,7 +389,7 @@ def centers_fast_rfs_l2(
     gammas: list[float] | None = None,
     epsilon: float = 0.01,
     numiter: int = 10000,
-) -> _AlgoResult:    
+) -> _AlgoResult:
     """
     Applies the Fast RF-S algorithm for convex clustering.
 
@@ -412,12 +409,12 @@ def centers_fast_rfs_l2(
     """
     if gammas is None:
         gammas = [10]
-    
+
     center_hist: dict[int, npt.NDArray[np.float64]] = {0: X.copy()}
     history: dict[int, float] = {}
     for i, gamma in enumerate(gammas):
-            
-        B, penalty = compute_B_penal(W, X, gamma)
+
+        B, penalty = compute_b_penal(W, X, gamma)
         x = X.reshape(-1)
 
         b = fastrfs_sparse(B, x, penalty, epsilon=epsilon, numiter=numiter)
@@ -441,7 +438,7 @@ def centers_rfs_l1(
     epsilon: float = 0.01,
     cauchy: float = 1e-5,
     M: int = 1000,
-) -> _AlgoResult:    
+) -> _AlgoResult:
     """
     Applies the RF-S algorithm for convex clustering with L1 norm.
 
@@ -477,15 +474,15 @@ def centers_rfs_l1(
     b_B_T = b_B.T
 
     X = np.asarray(X, dtype=float)
-    R = X.copy()                    
-    Beta_mat = np.zeros((q, p))   
+    R = X.copy()
+    Beta_mat = np.zeros((q, p))
 
     U_hist: dict[int, npt.NDArray[np.float64]] = {0: X.copy()}
     history: dict[int, float] = {0: 0.0}
 
     for m in range(M):
-        edge_grad = b_B_T @ R                          
-        G_mat = weights[:, None] * np.sign(edge_grad) 
+        edge_grad = b_B_T @ R
+        G_mat = weights[:, None] * np.sign(edge_grad)
 
         term1 = b_B @ G_mat
         term2 = (1.0 / gamma) * (R - X)
@@ -516,7 +513,7 @@ def centers_fast_rfs_l1(
     epsilon: float = 0.01,
     cauchy: float = 1e-5,
     M: int = 1000,
-) -> _AlgoResult:    
+) -> _AlgoResult:
     """
     Applies the Fast RF-S algorithm for convex clustering with L1 norm.
     
@@ -536,7 +533,7 @@ def centers_fast_rfs_l1(
         U_hist : dict, containing the history of the centers at each iteration.    
     """
     n, p = X.shape
-  
+
     edges, weights = built_edges(W)
 
     num_edges = len(edges)
@@ -558,7 +555,7 @@ def centers_fast_rfs_l1(
     I = identity(p, format='csr')
     B = kron(b_B, I, format='csr')
 
- 
+
     D = np.diag(weights)
     W_kron = kron(D, I, format='csr')
 
@@ -709,7 +706,7 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         """
         if self.algorithm not in self._ALGORITHMS:
             raise ValueError(f"Algorithm {self.algorithm} not recognized. Available algorithms: {self._ALGORITHMS}")
-        
+
         X = np.asarray(X, dtype=np.float64)
         W = np.asarray(W, dtype=np.float64)
 
@@ -726,12 +723,12 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         self.labels_: npt.NDArray[np.int_] = self._extract_labels(U_final)
 
         return self
-    
+
     def _run_experiment(
         self,
         X: npt.NDArray[np.float64],
         W: npt.NDArray[np.float64],
-    ) -> _AlgoResult:        
+    ) -> _AlgoResult:
         """
         Dispatch to the selected algorithm with unified parameter mapping.
  
@@ -740,49 +737,49 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         algo = self.algorithm
 
         if algo == "ADMM":
-            return ADMM(X, W, 
-                        gamma = self.gamma, 
-                        nu = self.step_size, 
-                        max_iter = self.max_iter, 
-                        tol = self.tol, 
+            return admm(X, W,
+                        gamma = self.gamma,
+                        nu = self.step_size,
+                        max_iter = self.max_iter,
+                        tol = self.tol,
                         verbose = self.verbose)
         elif algo == "AMA":
-            return AMA(X, W, 
-                        gamma = self.gamma, 
-                        nu = self.step_size, 
-                        max_iter = self.max_iter, 
-                        tol = self.tol, 
+            return ama(X, W,
+                        gamma = self.gamma,
+                        nu = self.step_size,
+                        max_iter = self.max_iter,
+                        tol = self.tol,
                         verbose = self.verbose)
         elif algo == "DR":
-            return dr_primal(X, W, 
-                            gamma = self.gamma, 
-                            rho = self.step_size, 
-                            max_iter = self.max_iter, 
+            return dr_primal(X, W,
+                            gamma = self.gamma,
+                            rho = self.step_size,
+                            max_iter = self.max_iter,
                             tol = self.tol)
         elif algo == "RFS_L2":
-            return centers_rfs_l2(X, W, 
-                                gamma = self.gamma, 
-                                epsilon = self.step_size, 
+            return centers_rfs_l2(X, W,
+                                gamma = self.gamma,
+                                epsilon = self.step_size,
                                 numiter = self.max_iter)
         elif algo == "Fast_RFS_L2":
             gammas = self.gamma if isinstance(self.gamma, list) else [self.gamma]
-            return centers_fast_rfs_l2(X, W, 
-                                        gammas = gammas, 
-                                        epsilon = self.step_size, 
+            return centers_fast_rfs_l2(X, W,
+                                        gammas = gammas,
+                                        epsilon = self.step_size,
                                         numiter = self.max_iter)
         elif algo == "RFS_L1":
-            return centers_rfs_l1(X, W, 
-                                gamma = self.gamma, 
-                                epsilon = self.step_size, 
-                                cauchy = self.tol, 
+            return centers_rfs_l1(X, W,
+                                gamma = self.gamma,
+                                epsilon = self.step_size,
+                                cauchy = self.tol,
                                 M = self.max_iter)
         elif algo == "Fast_RFS_L1":
-            return centers_fast_rfs_l1(X, W, 
-                                        gamma = self.gamma, 
-                                        epsilon = self.step_size, 
-                                        cauchy = self.tol, 
+            return centers_fast_rfs_l1(X, W,
+                                        gamma = self.gamma,
+                                        epsilon = self.step_size,
+                                        cauchy = self.tol,
                                         M = self.max_iter)
-        
+
         raise ValueError(f"Unreachable: unknown algorithm {algo}")  # pragma: no cover
 
     def fit_predict(
@@ -790,7 +787,7 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         X: npt.NDArray[np.float64],
         W: npt.NDArray[np.float64],
         y: None = None,
-    ) -> npt.NDArray[np.int_]:        
+    ) -> npt.NDArray[np.int_]:
         """
         Fit and return cluster labels.
  
@@ -805,12 +802,12 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         labels : ndarray of shape (n_samples,)
         """
         return self.fit(X,W).labels_
-    
-        
+
+
     def _extract_labels(
         self,
         U_final: npt.NDArray[np.float64],
-    ) -> npt.NDArray[np.int_]:        
+    ) -> npt.NDArray[np.int_]:
         """
         Extract cluster labels from final centers.
  
@@ -822,11 +819,11 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         centers are exactly equal (up to numerical precision) — there is no
         notion of "closest centroid" as in k-means. Connected components
         correctly handles chains of fused points without a fixed k.
- 
+        
         Parameters
         ----------
         U_final : ndarray of shape (n_samples, n_features)
- 
+
         Returns
         -------
         labels : ndarray of shape (n_samples,), dtype int
@@ -835,7 +832,7 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         dist = squareform(pdist(U_final))
         adjacency = (dist < self.merge_tol).astype(np.float64)
         np.fill_diagonal(adjacency, 0.0)
-        
+
         _, labels = connected_components(
                     csr_matrix(adjacency), directed=False
                 )

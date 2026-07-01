@@ -1,4 +1,5 @@
 # Convex Clustering
+[![CI](https://github.com/JuanNicolasMendozaRoncancio/Convex-Clustering/actions/workflows/ci.yml/badge.svg)](https://github.com/JuanNicolasMendozaRoncancio/Convex-Clustering/actions/workflows/ci.yml)
 
 Convex interpretable methods, ideal for interpretable outputs.
 

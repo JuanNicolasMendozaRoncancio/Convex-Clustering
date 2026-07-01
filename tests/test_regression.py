@@ -1,5 +1,7 @@
 import numpy as np
-from convex_clustering.regression import rfs_sparse, fastrfs_sparse
+
+from convex_clustering.regression import fastrfs_sparse, rfs_sparse
+
 
 def test_fastrfs_sparse(linear_problem):
     X, y, _ = linear_problem

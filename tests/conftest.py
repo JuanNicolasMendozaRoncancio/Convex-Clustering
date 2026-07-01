@@ -1,7 +1,9 @@
-import pytest
 import numpy as np
-from convex_clustering.utils import knn_w
+import pytest
 from sklearn.datasets import make_regression
+
+from convex_clustering.utils import knn_w
+
 
 @pytest.fixture
 def six_points():
@@ -19,11 +21,11 @@ def expected_centers():
 @pytest.fixture
 def linear_problem():
     X, y, b_true = make_regression(
-        n_samples=100, 
-        n_features=10, 
-        n_informative=3, 
-        noise=0.01, 
-        coef=True,          
+        n_samples=100,
+        n_features=10,
+        n_informative=3,
+        noise=0.01,
+        coef=True,
         random_state=42
     )
     return X, y, b_true

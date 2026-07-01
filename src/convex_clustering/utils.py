@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 import numpy.typing as npt
-from typing import Any
-from scipy.sparse import kron 
+from scipy.sparse import coo_matrix, identity, kron
 from scipy.spatial.distance import cdist
-from scipy.sparse import coo_matrix, identity, csr_matrix 
+
 
 def knn_w(X: npt.NDArray[np.float64], k:int=3, phi: float=0.5) -> npt.NDArray[np.float64]:
     """
@@ -25,14 +26,14 @@ def knn_w(X: npt.NDArray[np.float64], k:int=3, phi: float=0.5) -> npt.NDArray[np
     np.fill_diagonal(D, np.inf)
     n = D.shape[0]
     W = np.zeros((n,n))
-    for i in range(n): 
-        idx = np.argsort(D[i,:]) 
-        for j in idx[0:k]:  
+    for i in range(n):
+        idx = np.argsort(D[i,:])
+        for j in idx[0:k]:
             W[i,j] = np.exp(-phi * D[i,j])
-    
+
     return W
 
-def construct_Weighted_Laplacian(W: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+def construct_weighted_laplacian(W: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
     """
     Build the weighted Laplacian matrix from the weight matrix W.
 
@@ -44,7 +45,7 @@ def construct_Weighted_Laplacian(W: npt.NDArray[np.float64]) -> npt.NDArray[np.f
         L: Weighted Laplacian matrix.
     """
     D = np.diag(np.sum(W, axis=1))
-    return D - W 
+    return D - W
 
 def built_edges(W: npt.NDArray[np.float64]
                 ) -> tuple[list[tuple[int,int]], npt.NDArray[np.float64]]:
@@ -54,8 +55,7 @@ def built_edges(W: npt.NDArray[np.float64]
     Parameters:
     -----------
         W: Weight matrix.
-
-    Returns:  
+    Returns:
     -----------
         edges: List of edges.
         weights: Corresponding weights.
@@ -70,8 +70,8 @@ def built_edges(W: npt.NDArray[np.float64]
                 weights.append(W[i,j])
     return edges, np.array(weights, dtype=np.float64)
 
-def compute_B_penal(W: npt.NDArray[np.float64], 
-                    X: npt.NDArray[np.float64], 
+def compute_b_penal(W: npt.NDArray[np.float64],
+                    X: npt.NDArray[np.float64],
                     gamma: float) -> tuple[Any, float]:
     """
     Computes the matrix B and the penalty term for the convex clustering problem on the
@@ -101,7 +101,7 @@ def compute_B_penal(W: npt.NDArray[np.float64],
     for k, (i, j) in enumerate(edges):
         rows.extend([i, j])
         cols.extend([k, k])
-        data.extend([1, -1])    
+        data.extend([1, -1])
     b_B = coo_matrix((data, (rows, cols)), shape=(n, len(edges))).tocsr()
     I = identity(p, format='csr')
     B = kron(b_B, I, format='csr')

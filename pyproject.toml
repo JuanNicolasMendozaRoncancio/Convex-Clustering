@@ -103,7 +103,7 @@ markers = [
 # -----------------------------------------------------------------------------
 [tool.ruff]
 # ruff reemplaza: flake8, isort, pyupgrade, pydocstyle — todo en uno, escrito en Rust.
-target-version = "py3135"   # debe coincidir con requires-python
+target-version = "py313"   # debe coincidir con requires-python
 line-length = 88            # mismo default que black
 
 [tool.ruff.lint]
@@ -118,7 +118,12 @@ select = [
 ]
 
 ignore = [
-    "E501",  # line too long — ruff format lo maneja
+    "E501",   # ya lo tenías — line too long
+    "N803",   # nombres de argumento en mayúscula (X, W) — convención matemática/sklearn
+    "N806",   # nombres de variable en mayúscula (misma razón)
+    "W293",
+    "E741",
+    "W291"
 ]
  
 [tool.ruff.lint.per-file-ignores]
@@ -131,7 +136,7 @@ ignore = [
 # [tool.mypy] — type checker
 # -----------------------------------------------------------------------------
 [tool.mypy]
-python_version = "3.13.5"
+python_version = "3.13"
 # strict = true activa: disallow_untyped_defs, disallow_any_generics,
 # warn_return_any, warn_unused_ignores, etc.
 # Activarlo desde el inicio es más fácil que añadirlo después.

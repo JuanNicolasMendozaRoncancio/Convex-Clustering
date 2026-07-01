@@ -1,16 +1,15 @@
 from .algorithms import (
     ConvexClusterer,
-    ADMM,
-    AMA,
-    dr_primal,
-    centers_rfs_l2,
+    admm,
+    ama,
+    centers_fast_rfs_l1,
     centers_fast_rfs_l2,
     centers_rfs_l1,
-    centers_fast_rfs_l1,
+    centers_rfs_l2,
+    dr_primal,
 )
-
 from .regression import fastrfs_sparse
-from .utils import built_edges, compute_B_penal, construct_Weighted_Laplacian, knn_w
+from .utils import built_edges, compute_b_penal, construct_weighted_laplacian, knn_w
 
 __version__ = "0.1.0"
 
@@ -18,8 +17,8 @@ __all__ = [
     # Main class
     "ConvexClusterer",
     # Algorithms
-    "ADMM",
-    "AMA",
+    "admm",
+    "ama",
     "dr_primal",
     "centers_rfs_l2",
     "centers_fast_rfs_l2",
@@ -29,7 +28,7 @@ __all__ = [
     "fastrfs_sparse",
     # Utilities
     "built_edges",
-    "compute_B_penal",
-    "construct_Weighted_Laplacian",
+    "compute_b_penal",
+    "construct_weighted_laplacian",
     "knn_w",
 ]
