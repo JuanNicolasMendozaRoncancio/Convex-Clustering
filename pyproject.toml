@@ -103,7 +103,7 @@ markers = [
 # -----------------------------------------------------------------------------
 [tool.ruff]
 # ruff reemplaza: flake8, isort, pyupgrade, pydocstyle — todo en uno, escrito en Rust.
-target-version = "py313"   # debe coincidir con requires-python
+target-version = "py310"   # debe coincidir con requires-python
 line-length = 88            # mismo default que black
 
 [tool.ruff.lint]
