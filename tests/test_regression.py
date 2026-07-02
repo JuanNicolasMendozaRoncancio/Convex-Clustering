@@ -1,12 +1,14 @@
-from convex_clustering.regression import fastrfs_sparse, rfs_sparse
+from convex_clustering import Boosting
 import numpy as np
+import pytest
 
 def test_fastrfs_sparse(linear_problem):
     X, y, _ = linear_problem
 
-    b = fastrfs_sparse(X, y, delta=300, epsilon=0.01, numiter=5000)
+    model = Boosting(algorithm="FastRFS", delta=300, step_size=0.01, max_iter=5000)
+    model.fit(X, y)
+    y_pred = model.predict(X)
 
-    y_pred = X @ b
     ss_res = np.sum((y - y_pred) ** 2)
     ss_tot = np.sum((y - y.mean()) ** 2)
     r2 = 1 - ss_res / ss_tot
@@ -15,9 +17,10 @@ def test_fastrfs_sparse(linear_problem):
 
 def test_rfs_sparse_solves_regression(linear_problem):
     X, y, _ = linear_problem
-    b = rfs_sparse(X, y, delta=1000, epsilon=0.01, numiter=5000)
+    model = Boosting(algorithm="RFS", delta=1000, step_size=0.01, max_iter=5000)
+    model.fit(X, y)
+    y_pred = model.predict(X)
 
-    y_pred = X @ b
     ss_res = np.sum((y - y_pred) ** 2)
     ss_tot = np.sum((y - y.mean()) ** 2)
     r2 = 1 - ss_res / ss_tot
@@ -26,8 +29,25 @@ def test_rfs_sparse_solves_regression(linear_problem):
 
 def test_rfs_and_fastrfs_coefficients_are_equivalent(linear_problem):
     X, y, _ = linear_problem
-    b_rfs = rfs_sparse(X, y, delta=1.0, epsilon=0.01, numiter=5000)
-    b_fast = fastrfs_sparse(X, y, delta=1.0, epsilon=0.01, numiter=5000)
+    model_rfs = Boosting(algorithm="RFS", delta=1.0, step_size=0.01, max_iter=5000)
+    model_rfs.fit(X, y)
 
-    assert np.allclose(b_rfs, b_fast, atol=1e-2), \
-        f"Coeficientes divergen:\n  rfs:     {b_rfs}\n  fastrfs: {b_fast}"
+    model_fast = Boosting(algorithm="FastRFS", delta=1.0, step_size=0.01, max_iter=5000)
+    model_fast.fit(X, y)
+
+    assert np.allclose(model_rfs.coef_, model_fast.coef_, atol=1e-2), \
+        f"Coeficientes divergen:\n  rfs:     {model_rfs.coef_}\n  fastrfs: {model_fast.coef_}"
+
+def test_boosting_invalid_algo(linear_problem):
+    X, y, _ = linear_problem
+
+    model = Boosting(algorithm="InvalidAlgo", delta=1.0, step_size=0.01, max_iter=100)
+    with pytest.raises(ValueError, match="Algorithm InvalidAlgo not supported. Choose from"):
+        model.fit(X, y)
+
+def test_boosting_predict_before_fit(linear_problem):
+    X, y, _ = linear_problem
+
+    model = Boosting(algorithm="FastRFS", delta=1.0, step_size=0.01, max_iter=100)
+    with pytest.raises(AttributeError, match="object has no attribute 'coef_'"):
+        model.predict(X) 

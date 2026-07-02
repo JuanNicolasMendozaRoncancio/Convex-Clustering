@@ -8,7 +8,11 @@ from .algorithms import (
     centers_rfs_l2,
     dr_primal,
 )
-from .regression import fastrfs_sparse
+from .regression import (
+    Boosting,
+    fastrfs_sparse,
+    rfs_sparse
+)
 from .utils import built_edges, compute_b_penal, construct_weighted_laplacian, knn_w
 
 __version__ = "0.1.0"
@@ -16,6 +20,7 @@ __version__ = "0.1.0"
 __all__ = [
     # Main class
     "ConvexClusterer",
+    "Boosting",
     # Algorithms
     "admm",
     "ama",
@@ -26,6 +31,7 @@ __all__ = [
     "centers_fast_rfs_l1",
     # Regression
     "fastrfs_sparse",
+    "rfs_sparse",
     # Utilities
     "built_edges",
     "compute_b_penal",

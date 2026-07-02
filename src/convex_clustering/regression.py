@@ -5,7 +5,6 @@ import numpy.typing as npt
 from scipy.sparse import issparse
 from scipy.sparse.linalg import norm as sp_norm
 from sklearn.base import BaseEstimator, RegressorMixin
-from sklearn.utils.validation import check_is_fitted
 
 def _normalize_sparse(X: npt.NDArray[np.float64],
                       y: npt.NDArray[np.float64]) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
@@ -219,6 +218,5 @@ class Boosting(BaseEstimator, RegressorMixin): # type: ignore[misc]
         -------
         y_pred : ndarray of shape (n_samples,)
         """
-        check_is_fitted(self, 'coef_')
         X = np.asarray(X, dtype=np.float64)
-        return X @ self.coef_ # type: ignore[no-any-return]
+        return X @ self.coef_
