@@ -118,9 +118,9 @@ select = [
 ]
 
 ignore = [
-    "E501",   # ya lo tenías — line too long
-    "N803",   # nombres de argumento en mayúscula (X, W) — convención matemática/sklearn
-    "N806",   # nombres de variable en mayúscula (misma razón)
+    "E501",   
+    "N803",   
+    "N806",   
     "W293",
     "E741",
     "W291",

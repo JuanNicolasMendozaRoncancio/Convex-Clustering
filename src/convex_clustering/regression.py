@@ -4,7 +4,8 @@ import numpy as np
 import numpy.typing as npt
 from scipy.sparse import issparse
 from scipy.sparse.linalg import norm as sp_norm
-
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.utils.validation import check_is_fitted
 
 def _normalize_sparse(X: npt.NDArray[np.float64],
                       y: npt.NDArray[np.float64]) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
@@ -123,3 +124,101 @@ def fastrfs_sparse(X: npt.NDArray[np.float64],
         b *= (1 - epsilon / delta)
         b[j_k] += epsilon * s_k
     return b
+
+class Boosting(BaseEstimator, RegressorMixin): # type: ignore[misc]
+    """
+    Forward stagewise boosting regressor via RF-S / Fast RF-S.
+
+    Wraps rfs_sparse and fastrfs_sparse behind a scikit-learn-compatible
+    fit()/predict() interface. Both underlying algorithms solve the same
+    L1-regularized regression problem — the incremental forward stagewise
+    path, which converges to the Lasso solution path as step_size -> 0
+    (Efron et al., 2004) — so 'algorithm' selects a computational strategy,
+    not a different statistical model.
+
+    Parameters
+    ----------
+    algorithm : str, default='FastRFS'
+        One of 'RFS', 'FastRFS'.
+    delta : float, default=1.0
+        L1 regularization parameter. Must satisfy 0 < step_size < delta.
+    step_size : float, default=0.01
+        Step size for the iterative coefficient update.
+    max_iter : int, default=1000
+        Number of iterations to run (no early stopping; both algorithms
+        run for exactly max_iter steps).
+
+    Attributes
+    ----------
+    coef_ : ndarray of shape (n_features,)
+        Fitted regression coefficients.
+    n_iter_ : int
+        Number of iterations actually run (== max_iter).
+    """
+
+    _ALGORITHMS = frozenset({'RFS', 'FastRFS'})
+
+    def __init__(self,
+                 algorithm: str = "FastRFS",
+                 delta: float = 1.0,
+                 step_size: float = 0.01,
+                 max_iter: int = 1000,
+    ) -> None:
+        self.algorithm = algorithm
+        self.delta = delta
+        self.step_size = step_size
+        self.max_iter = max_iter
+
+    def fit(
+            self,
+            X: npt.NDArray[np.float64],
+            y: npt.NDArray[np.float64]
+    ) -> Boosting:
+        """
+        Fit coefficients via forward stagewise boosting.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+        y : ndarray of shape (n_samples,)
+
+        Returns
+        -------
+        self : Boosting
+
+        Raises
+        ------
+        ValueError
+            If algorithm is not one of the supported options.
+        """
+        if self.algorithm not in self._ALGORITHMS:
+            raise ValueError(f"Algorithm {self.algorithm} not supported. Choose from {self._ALGORITHMS}.")
+        
+        X = np.asarray(X, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64)
+
+        if self.algorithm == "RFS":
+            coef = rfs_sparse(X, y, self.delta, self.step_size, self.max_iter)
+        else:  
+            coef = fastrfs_sparse(X, y, self.delta, self.step_size, self.max_iter)
+
+        self.coef_: npt.NDArray[np.float64] = coef
+        self.n_iter_: int = self.max_iter
+
+        return self
+    
+    def predict(self, X: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        """
+        Predict target values as X @ coef_.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+        """
+        check_is_fitted(self, 'coef_')
+        X = np.asarray(X, dtype=np.float64)
+        return X @ self.coef_ # type: ignore[no-any-return]
