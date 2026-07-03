@@ -21,7 +21,8 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AMAZONS3KEY }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AMAZONS3SECRETKEY }}
           AWS_REGION: eu-north-1
-        run: scripts/generate_datasets.py
+        run: |
+          python scripts/generate_datasets.py
       - run: pytest tests/
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AMAZONS3KEY }}
@@ -37,7 +38,7 @@ jobs:
           python-version: "3.11"
           cache: "pip"
       - run: pip install ruff==0.4
-      - run: ruff check src/ tests/
+      - run: ruff check src/ tests/ scripts/
 
   mypy:
     runs-on: ubuntu-latest
@@ -48,4 +49,4 @@ jobs:
           python-version: "3.11"
           cache: "pip"
       - run: pip install -e ".[dev]"
-      - run: mypy src/convex_clustering
+      - run: mypy src/convex_clustering scripts/
