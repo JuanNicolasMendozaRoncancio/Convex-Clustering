@@ -63,7 +63,7 @@ def _download_from_s3(
         y_path: Path
 ) -> None:
     try:
-        import boto3 # type: ignore[import-untyped]
+        import boto3 
     except ImportError as e:
         raise ImportError(
             "boto3 is required for S3 downloads. " \
@@ -78,3 +78,6 @@ def _download_from_s3(
     for suffix, local_path in (("_X.npy", x_path), ("_y.npy", y_path)):
         key = f"{_S3_PREFIX}/{name}{suffix}"
         s3.download_file(_BUCKET, key, str(local_path))
+
+
+        

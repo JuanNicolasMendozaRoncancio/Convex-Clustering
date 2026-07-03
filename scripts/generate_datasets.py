@@ -13,7 +13,7 @@ import os
 import tempfile
 from pathlib import Path
 
-import boto3 # type: ignore[import-untyped]
+import boto3 
 import numpy as np
 import numpy.typing as npt
 from sklearn.datasets import make_blobs, make_circles, make_moons
@@ -62,3 +62,6 @@ def upload_datasets() -> None:
 
 if __name__ == "__main__":
     upload_datasets()
+
+
+    
