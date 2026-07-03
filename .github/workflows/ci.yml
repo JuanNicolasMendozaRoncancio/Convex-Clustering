@@ -16,6 +16,20 @@ jobs:
           python-version: "3.11"
           cache: "pip"
       - run: pip install -e ".[dev]"
+      - name: Validate AWS credentials format
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AMAZONS3KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AMAZONS3SECRETKEY }}
+        run: |
+          python - <<'EOF'
+          import os
+          key_id = os.environ["AWS_ACCESS_KEY_ID"]
+          secret = os.environ["AWS_SECRET_ACCESS_KEY"]
+          print(f"Key ID length: {len(key_id)} (expected 20)")
+          print(f"Secret length: {len(secret)} (expected 40)")
+          print(f"Key ID starts with: {key_id[:4]}...")
+          print(f"Has leading/trailing spaces: {key_id != key_id.strip()} / {secret != secret.strip()}")
+          EOF
       - name: Generate and cache datasets
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AMAZONS3KEY }}
