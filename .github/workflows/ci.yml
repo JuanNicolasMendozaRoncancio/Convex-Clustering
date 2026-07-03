@@ -16,7 +16,17 @@ jobs:
           python-version: "3.11"
           cache: "pip"
       - run: pip install -e ".[dev]"
+      - name: Generate and cache datasets
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AMAZONS3KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AMAZONS3SECRETKEY }}
+          AWS_REGION: eu-north-1
+        run: scripts/generate_datasets.py
       - run: pytest tests/
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AMAZONS3KEY }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AMAZONS3SECRETKEY }}
+          AWS_REGION: eu-north-1
 
   ruff:
     runs-on: ubuntu-latest
