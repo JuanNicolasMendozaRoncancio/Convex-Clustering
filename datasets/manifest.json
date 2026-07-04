@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-07-04T18:08:54.769208+00:00",
+  "git_commit": "f24e28c586e3c64945548b3c9372ecdbde2791ea",
+  "random_state": 42,
+  "s3_bucket": "convex-clustering-andes",
+  "s3_prefix": "datasets/synthetic",
+  "files": {
+    "blobs_X.npy": "md5:0f0849d7adc89af02b5005c3166f482c",
+    "blobs_y.npy": "md5:e2b983d5a214b29e194cdffd0e23940f",
+    "moons_X.npy": "md5:598c5f80e815449796998b8c2c801845",
+    "moons_y.npy": "md5:638d66ddec0aa3ceb482ff05db754e25",
+    "circles_X.npy": "md5:139d1a3bada31fe9b21ef8e9fdc0393c",
+    "circles_y.npy": "md5:638d66ddec0aa3ceb482ff05db754e25"
+  }
+}
