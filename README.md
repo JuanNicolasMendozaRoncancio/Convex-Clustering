@@ -23,10 +23,12 @@ portfolio. Full documentation, examples and benchmarks are in progress.
 ## Runing experiments on Google Cloud
 
 Bluid and push the image:
+
     docker build -t gcr.io/{PROJECT_ID}/convex-clustering-job .
     docker push gcr.io/{PROJECT_ID}/convex-clustering-job
 
 Create the job:
+
     gcloud run jobs create convex-clustering-job \
       --image gcr.io/{PROJECT_ID}/convex-clustering-job \
       --region europe-north1 \
@@ -35,5 +37,6 @@ Create the job:
       --set-secrets AWS_SECRET_ACCESS_KEY=aws-secret-key:latest
 
 Execute an experiment:
+
     gcloud run jobs execute convex-clustering-job \
       --args="--dataset,blobs,--algorithm,ADMM,--gamma,1.0"
