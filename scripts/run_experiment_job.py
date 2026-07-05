@@ -16,6 +16,7 @@ import mlflow
 import argparse
 import json
 import os
+import time
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -77,10 +78,12 @@ def run_experiment(
             max_iter=max_iter,
             merge_tol=merge_tol,
         )
+        t0 = time.perf_counter()
         tracemalloc.start()
         model.fit(X, W)
         _, peak = tracemalloc.get_traced_memory()
         tracemalloc.stop()
+        elapsed = time.perf_counter() - t0
         peak_mb = peak / 1024 / 1024
         print(f"Fit complete — {model.n_iter_} iterations, "
             f"{len(set(model.labels_.tolist()))} clusters found, "
@@ -121,12 +124,18 @@ def run_experiment(
             with open(config_path, "w") as f:
                 json.dump(config, f, indent=2)
 
-            metrics_path = tmp_path / "convergence.csv"
-            with open(metrics_path, "w") as f:
+            convergence_path = tmp_path / "convergence.csv"
+            with open(convergence_path, "w") as f:
                 f.write("iteration, center_diff\n")
                 for it, val in model.history_.items():
                     f.write(f"{it}, {val}\n")
-            mlflow.log_artifact(str(metrics_path), artifact_path="convergence")
+            mlflow.log_artifact(str(convergence_path), artifact_path="convergence")
+
+            metrics_path = tmp_path / "metrics.csv"
+            with open(metrics_path, "w") as f:
+                f.write("Silhouette_score, fit_time_seconds, peak_memory_mb, n_clusters, n_iter\n")
+                f.write(f"{sil}, {elapsed:.4f}, {peak_mb:.2f}, {len(set(model.labels_.tolist()))}, {model.n_iter_}\n")
+            mlflow.log_artifact(str(metrics_path), artifact_path="metrics")
 
             paths_path = tmp_path / "paths.npy"
             paths_arr = np.stack(list(model.centers_hist_.values()), axis=0)
@@ -137,7 +146,8 @@ def run_experiment(
 
             for local_file, suffix in (
                 (config_path, "config.json"),
-                (metrics_path, "convergence.csv"),
+                (metrics_path, "metrics.csv"),
+                (convergence_path, "convergence.csv"),
                 (paths_path, "paths.npy"),
                 (labels_path, "labels.npy"),
             ):
