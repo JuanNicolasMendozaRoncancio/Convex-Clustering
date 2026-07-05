@@ -663,7 +663,7 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         max_iter: int = 1000,
         tol: float = 1e-5,
         verbose: bool = False,
-        merge_tol: float = 1e-5,
+        merge_tol: float = 1e-1,
     ) -> None:
         self.algorithm = algorithm
         self.gamma = gamma
