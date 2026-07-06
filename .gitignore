@@ -27,3 +27,7 @@ estructura.txt
 testchimbos.ipynb
 
 .datasets_cache/
+
+mlflow.db
+
+mlruns/
