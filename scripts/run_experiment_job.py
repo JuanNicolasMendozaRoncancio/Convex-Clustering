@@ -68,7 +68,7 @@ def run_experiment(
     print(f"Loaded dataset '{dataset}': X={X.shape}, y={y_true.shape}")
 
     from convex_clustering.utils import knn_w
-    W = knn_w(X, k=5, phi = 0.5)
+    W = knn_w(X, k=2, phi = 0.5)
 
     with mlflow.start_run(run_name=exp_id):
         model = ConvexClusterer(
