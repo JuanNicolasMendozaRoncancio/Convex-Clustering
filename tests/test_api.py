@@ -12,7 +12,6 @@ from convex_clustering.utils import knn_w
 
 client = TestClient(app)
 
-
 @pytest.fixture(scope = "module")
 def blob_payload() -> dict:
     X, _ = make_blobs(n_samples=20, centers=2, cluster_std=0.5, random_state=7)
