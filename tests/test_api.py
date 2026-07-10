@@ -3,7 +3,6 @@ Tests for the FastAPI endpoints: /cluster, /algorithms, /compare.
 """
 from __future__ import annotations
 
-import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 from sklearn.datasets import make_blobs
