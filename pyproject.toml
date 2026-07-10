@@ -58,7 +58,7 @@ cloud = [
 ]
 
 dev = [
-    "convex-clustering[viz,cloud,tracking]",  
+    "convex-clustering[viz,cloud,tracking,api]",  # api added: FastAPI + httpx for test_api.py
     "pytest>=7.4",
     "pytest-cov>=4.1",          
     "ruff>=0.4",                
@@ -72,7 +72,7 @@ api = [
     "fastapi>=0.11.0",
     "uvicorn[standard]>=0.29",
     "pydantic>=2.6",
-    "httpx>=0.27"
+    "httpx2>=0.28",   # httpx2 replaces httpx as the starlette TestClient backend
 ]
 
 dashboard = [
@@ -96,12 +96,13 @@ packages = ["src/convex_clustering"]
 # -----------------------------------------------------------------------------
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-# addopts: opciones por defecto en cada ejecución.
-#   -v: verbose (muestra cada test por nombre)
-#   --tb=short: traceback corto
-#   --strict-markers: falla si hay markers no declarados
+# pythonpath = ["."] adds the repo root to sys.path at test-collection time.
+# This makes `app/` importable as a package without installing it via pip.
+# The alternative (installing app/ as an editable package) would require
+# a separate pyproject.toml inside app/ — unnecessary complexity for a
+# single-repo project where app/ and tests/ live at the same level.
+pythonpath = ["."]
 addopts = "-v --tb=short --strict-markers"
-# markers declarados.
 markers = [
     "slow: tests de larga duración (excluir con -m 'not slow')",
 ]
@@ -111,9 +112,8 @@ markers = [
 # [tool.ruff] — linter y formatter
 # -----------------------------------------------------------------------------
 [tool.ruff]
-# ruff reemplaza: flake8, isort, pyupgrade, pydocstyle — todo en uno, escrito en Rust.
-target-version = "py310"   # debe coincidir con requires-python
-line-length = 88            # mismo default que black
+target-version = "py310"
+line-length = 88
 
 [tool.ruff.lint]
 select = [
@@ -138,8 +138,6 @@ ignore = [
 ]
  
 [tool.ruff.lint.per-file-ignores]
-# En los tests, las aserciones con == son intencionales (pytest pattern).
-# N802: nombres de funciones en tests pueden ser descriptivos y largos.
 "tests/*" = ["S101", "N802"]
 
 
@@ -148,12 +146,18 @@ ignore = [
 # -----------------------------------------------------------------------------
 [tool.mypy]
 python_version = "3.13"
-# strict = true activa: disallow_untyped_defs, disallow_any_generics,
-# warn_return_any, warn_unused_ignores, etc.
-# Activarlo desde el inicio es más fácil que añadirlo después.
 strict = true
-# numpy y sklearn tienen stubs, mypy los encuentra automáticamente.
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# app/ uses FastAPI's decorator-based router pattern. FastAPI decorators
+# (@router.get, @router.post) return the original function unchanged at
+# runtime, but mypy strict mode cannot verify the decorator signatures
+# without the fastapi-stubs package (which lags behind FastAPI releases).
+# disallow_untyped_decorators = false unblocks mypy on app/ without
+# weakening type checking on the library itself (src/convex_clustering/).
+module = "app.*"
+disallow_untyped_decorators = false
 
 # -----------------------------------------------------------------------------
 # [tool.coverage] — configuración de cobertura
@@ -163,7 +167,5 @@ source = ["src/convex_clustering"]
 omit = ["tests/*", "notebooks/*", "app/*"]
  
 [tool.coverage.report]
-# Falla si la cobertura cae por debajo del 80%.
 fail_under = 80
 show_missing = true
-
