@@ -43,10 +43,6 @@ def run_cluster(request: ClusterRequest) -> ClusterResponse:
     X = np.asarray(request.X, dtype=np.float64)
     W = np.asarray(request.W, dtype=np.float64)
 
-    # Shape validation: X must be non-empty, all rows same length.
-    # W must be square and match X's n_samples.
-    # Done here (not in Pydantic) because cross-field constraints in Pydantic v2
-    # require model_validator, which has inconsistent behavior across patch versions.
     if len(request.X) == 0:
         raise HTTPException(status_code=422, detail="X must not be empty.")
     n = len(request.X)
@@ -58,7 +54,7 @@ def run_cluster(request: ClusterRequest) -> ClusterResponse:
     if len(request.W) != n or any(len(row) != n for row in request.W):
         raise HTTPException(
             status_code=422,
-            detail=f"W must be square ({n}×{n}) and match X's n_samples.",
+            detail=f"W must be square ({n}x{n}) and match X's n_samples.",
         )
 
     try:
@@ -72,14 +68,8 @@ def run_cluster(request: ClusterRequest) -> ClusterResponse:
         )
         model.fit(X, W)
     except ValueError as exc:
-        # ConvexClusterer raises ValueError for invalid algorithm names
-        # (defensive, since Pydantic already validated this) or other
-        # parameter errors. Surface them as 422 so the client gets a
-        # meaningful error message.
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     except Exception as exc:
-        # Numerical failures (e.g. singular matrix in DR with degenerate W)
-        # are true server-side errors — 500 is correct here.
         raise HTTPException(
             status_code=500,
             detail=f"Algorithm failed with an internal error: {exc}",

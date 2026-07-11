@@ -58,7 +58,7 @@ cloud = [
 ]
 
 dev = [
-    "convex-clustering[viz,cloud,tracking,api]",  # api added: FastAPI + httpx for test_api.py
+    "convex-clustering[viz,cloud,tracking,api]",  
     "pytest>=7.4",
     "pytest-cov>=4.1",          
     "ruff>=0.4",                
@@ -72,7 +72,7 @@ api = [
     "fastapi>=0.11.0",
     "uvicorn[standard]>=0.29",
     "pydantic>=2.6",
-    "httpx2>=0.28",   # httpx2 replaces httpx as the starlette TestClient backend
+    "httpx2>=0.28",   
 ]
 
 dashboard = [

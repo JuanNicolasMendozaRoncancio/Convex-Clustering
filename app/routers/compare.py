@@ -32,7 +32,7 @@ def compare_algorithms(request: CompareRequest) -> CompareResponse:
     X = np.asarray(request.X, dtype=np.float64)
     W = np.asarray(request.W, dtype=np.float64)
 
-    # Shape + symmetry validation (mirrors cluster.py — see rationale there).
+
     if len(request.X) == 0:
         raise HTTPException(status_code=422, detail="X must not be empty.")
     n = len(request.X)
@@ -44,7 +44,7 @@ def compare_algorithms(request: CompareRequest) -> CompareResponse:
     if len(request.W) != n or any(len(row) != n for row in request.W):
         raise HTTPException(
             status_code=422,
-            detail=f"W must be square ({n}×{n}) and match X's n_samples.",
+            detail=f"W must be square ({n}x{n}) and match X's n_samples.",
         )
 
 
@@ -62,9 +62,6 @@ def compare_algorithms(request: CompareRequest) -> CompareResponse:
             )
             model.fit(X, W)
         except Exception as exc:
-            # One algorithm failing should not abort the entire comparison.
-            # Return a sentinel result with silhouette = -1.0 so the caller
-            # can see which algorithms failed and which succeeded.
             results.append(
                 AlgorithmMetrics(
                     algorithm=algo_name,
@@ -74,8 +71,6 @@ def compare_algorithms(request: CompareRequest) -> CompareResponse:
                     silhouette_score=-1.0,
                 )
             )
-            # Log the error but do not re-raise.
-            # In a production system this would go to a structured logger.
             print(f"[compare] {algo_name} failed: {exc}")
             continue
 
@@ -85,7 +80,6 @@ def compare_algorithms(request: CompareRequest) -> CompareResponse:
         if n_clusters > 1:
             sil = float(silhouette_score(X, model.labels_))
         else:
-            # Silhouette is undefined for a single cluster.
             sil = -1.0
 
         results.append(

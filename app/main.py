@@ -2,14 +2,9 @@
 FastAPI application — Convex Clustering API.
  
 Entry point: uvicorn app.main:app --reload
- 
-Why this module only creates the app and registers routers
+
+This module only creates the app and registers routers
 ----------------------------------------------------------
-main.py's sole responsibility is wiring. Business logic lives in the
-router modules; data contracts live in schemas.py. This follows the
-single-responsibility principle: if you need to add middleware, CORS,
-or authentication in future steps, you add it here without touching
-the router logic.
 """
 from __future__ import annotations
 
@@ -23,10 +18,7 @@ from app.routers import algorithms, cluster, compare
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # Starup: nothing to do yet
-    # future: add database connection, logging, etc.)
     yield
-    # shutdown: nothing to do yet
 
 app = FastAPI(
     title = "Convex Clustering API",
