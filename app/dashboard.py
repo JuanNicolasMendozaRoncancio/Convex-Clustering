@@ -3,13 +3,6 @@ Dashboard — Convex Clustering
   1. Interactive clustering  → calls ConvexClusterer directly (centers_hist_ access)
   2. Lasso vs Boosting       → calls the library directly
   3. Weight graph            → visualizes W as a graph (networkx + PyVis)
-
-Start (inside compose):
-    streamlit run app/dashboard.py --server.port 8501 --server.address 0.0.0.0
-
-Start locally (outside compose):
-    streamlit run app/dashboard.py
-    # API_URL defaults to localhost:8000
 """
 from __future__ import annotations
 
@@ -135,6 +128,17 @@ tab_cluster, tab_boost, tab_graph = st.tabs([
 # ==========================================================================
 with tab_cluster:
     col_ctrl, col_plot = st.columns([1, 2], gap="large")
+    st.markdown(
+        "This tab allows you to run convex clustering interactively." \
+        "You can set the dataset, algorithm, and hyperparameters, then visualize the results." \
+        " Nevertheless, you should be carefull selectimg the hiperparemeters, for instance for DR, the step size should be large" \
+        "While for all the others it should be small. Also, for ADMM and AMA, you should use step sizes smaller than 1.0." \
+        "Use a great value of gamma to get a small number of clusters, and a small value to get a large number of clusters.\n"
+        ""  \
+        "Have fun! :D\n." \
+        "" \
+        "Note: Fast_RFS2 only shows the last iteration, you can play with the gamma value to see the cluster path." \
+    )
 
     with col_ctrl:
         st.subheader("Data")
@@ -166,6 +170,18 @@ with tab_cluster:
             "phi (weight scale)", 0.1, 2.0, 0.5, step=0.1,
             help="Scale factor in exp(-phi·d(i,j)). Higher phi → weights decay faster with distance.",
         )
+        step_size = st.select_slider(
+            "step_size",
+            options=[0.001, 0.005, 0.01, 0.05, 0.1, 1, 1.5, 2, 5,10, 20, 50, 100,150,200,250,300,400,500,1000],
+            value=0.01  ,
+            help="Step size for the optimization algorithm.",
+        )
+        max_iter = st.select_slider(
+            "max_iter",
+            options=[100, 250, 500, 1000,1500,2000,2500,3000,4000,5000,5500,6000,6500,7000,7500,8000,8500,9000,9500,10000],
+            value=500,
+            help="Maximum number of iterations for the optimization algorithm.",
+        )
         merge_tol = st.select_slider(
             "merge_tol",
             options=[0.05, 0.1, 0.2, 0.5, 1.0, 2.0],
@@ -182,7 +198,7 @@ with tab_cluster:
     else:
         X, y_true = make_circles(n_samples=n_samples, noise=0.08, factor=0.5, random_state=42)
 
-    # Build W locally — avoids an API round-trip for preprocessing
+    # Build W locally to avoid an API round-trip for preprocessing
     from scipy.spatial.distance import cdist
 
     def _knn_w(X: np.ndarray, k: int, phi: float) -> np.ndarray:
@@ -208,21 +224,28 @@ with tab_cluster:
                 model = ConvexClusterer(
                     algorithm=algorithm,
                     gamma=gamma,
-                    step_size=0.5,
-                    max_iter=500,
+                    step_size=step_size,
+                    max_iter=max_iter,
                     tol=1e-4,
                     merge_tol=merge_tol,
                 )
                 model.fit(X, W)
 
                 hist = model.centers_hist_
-                hist_keys = sorted(hist.keys())
-                max_frames = 200
-                if len(hist_keys) > max_frames:
-                    step = max(1, len(hist_keys) // max_frames)
-                    hist_keys = hist_keys[::step]
-                    if hist_keys[-1] != sorted(hist.keys())[-1]:
-                        hist_keys.append(sorted(hist.keys())[-1])
+                hist_keys_all = sorted(hist.keys())
+                n_keys = len(hist_keys_all)
+                percentile_indices = [
+                    int(round(p * (n_keys - 1)))
+                    for p in np.linspace(0, 1, 21)
+                ]
+
+                seen: set[int] = set()
+                hist_keys: list[int] = []
+                for idx in percentile_indices:
+                    key = hist_keys_all[idx]
+                    if key not in seen:
+                        seen.add(key)
+                        hist_keys.append(key)
 
                 st.session_state["cluster_result"] = {
                     "X": X,
@@ -273,28 +296,34 @@ with tab_cluster:
             """, unsafe_allow_html=True)
 
             st.markdown("---")
-            st.markdown("**Center trajectory** — drag the slider to watch centers fuse together")
-
-            frame_idx = st.slider(
-                "Iteration",
-                min_value=0,
-                max_value=len(hist_keys) - 1,
-                value=len(hist_keys) - 1,
-                format="",
-                key="path_slider",
-            )
-            current_iter = hist_keys[frame_idx]
+            if len(hist_keys) > 1:
+                st.markdown("**Center trajectory** — drag the slider to watch centers fuse together")
+                frame_idx = st.slider(
+                    "Iteration",
+                    min_value=0,
+                    max_value=len(hist_keys) - 1,
+                    value=len(hist_keys) - 1,
+                    format="",
+                    key="path_slider",
+                )
+                current_iter = hist_keys[frame_idx]
+            else:
+                # Single-frame algorithm (e.g. Fast_RFS_L2 with one gamma value):
+                # no trajectory to animate, just show the final result.
+                frame_idx = 0
+                current_iter = hist_keys[0]
+                st.caption("This algorithm does not produce an iteration-by-iteration trajectory — showing final centers.")
+ 
             centers_at_frame = hist[current_iter]
-
             st.caption(f"Iteration {current_iter} / {hist_keys[-1]}")
-
+ 
             palette = [
                 "#818cf8", "#34d399", "#f472b6", "#fbbf24",
                 "#60a5fa", "#a78bfa", "#fb923c", "#2dd4bf",
             ]
-
+ 
             fig_path = go.Figure()
-
+ 
             for lbl in sorted(set(labels.tolist())):
                 mask = labels == lbl
                 fig_path.add_trace(go.Scatter(
@@ -307,7 +336,7 @@ with tab_cluster:
                     ),
                     name=f"Cluster {lbl}",
                 ))
-
+ 
             fig_path.add_trace(go.Scatter(
                 x=centers_at_frame[:, 0],
                 y=centers_at_frame[:, 1],
@@ -319,7 +348,7 @@ with tab_cluster:
                 ),
                 name="Centers (current iter)",
             ))
-
+ 
             for i in range(len(X_stored)):
                 fig_path.add_trace(go.Scatter(
                     x=[X_stored[i, 0], centers_at_frame[i, 0]],
@@ -329,7 +358,7 @@ with tab_cluster:
                     showlegend=False,
                     hoverinfo="none",
                 ))
-
+ 
             fig_path.update_layout(
                 template="plotly_dark",
                 paper_bgcolor="#0f1117",
@@ -343,7 +372,7 @@ with tab_cluster:
                 ),
             )
             st.plotly_chart(fig_path, use_container_width=True, key="path_chart")
-
+ 
             if conv:
                 iters_c = list(conv.keys())
                 diffs_c = list(conv.values())
@@ -373,7 +402,7 @@ with tab_cluster:
                     yaxis_type="log",
                 )
                 st.plotly_chart(fig_conv, use_container_width=True, key="conv_chart")
-
+ 
         else:
             # Dataset preview before running
             fig_prev = go.Figure()
@@ -401,27 +430,27 @@ with tab_cluster:
 with tab_boost:
     st.subheader("Lasso vs Boosting (RF-S)")
     st.markdown(
-        "Both models solve the same problem — the L1 regularization path — "
+        "Both models solve the same problem Lasso regression problem"
         "via different strategies. Lasso solves it with quadratic programming. "
         "Boosting (RF-S) traces it incrementally via forward stagewise, "
-        "which converges to the Lasso path as step_size → 0 (Efron et al., 2004)."
+        "which converges to the Lasso path as step_size tends to 0 (Efron et al., 2004)."
     )
 
     col_b1, col_b2 = st.columns([1, 2], gap="large")
 
     with col_b1:
         st.subheader("Parameters")
-        n_reg = st.slider("n_samples", 50, 500, 200, step=50, key="n_reg")
-        n_feat = st.slider("n_features", 5, 30, 10, key="n_feat")
-        n_info = st.slider("n_informative", 1, 10, 3, key="n_info")
+        n_reg = st.slider("n_samples", 50, 300, 200, step=25, key="n_reg")
+        n_feat = st.slider("n_features", 10, 50, 5, key="n_feat")
+        n_info = st.slider("n_informative", 1, 10, 2, key="n_info")
         noise_reg = st.slider("noise", 0.0, 10.0, 0.1, step=0.1, key="noise_reg")
 
         st.subheader("Boosting (RF-S)")
         boost_algo = st.radio("Variant", ["FastRFS", "RFS"], horizontal=True)
-        delta = st.select_slider("delta", [0.5, 1.0, 2.0, 5.0, 10.0, 50.0, 100.0], value=5.0,
+        delta = st.select_slider("delta", [100, 150, 200, 250, 300, 350, 400, 450, 500], value=100,
                                   help="L1 regularization parameter.")
         step_size = st.select_slider("step_size (epsilon)", [0.001, 0.005, 0.01, 0.05, 0.1], value=0.01)
-        max_iter_b = st.slider("max_iter", 1000, 10000, 3000, step=500)
+        max_iter_b = st.slider("max_iter", 1000, 10000, 3000, step=200)
 
         st.subheader("Lasso")
         alpha_lasso = st.select_slider("alpha (sklearn)", [0.001, 0.01, 0.05, 0.1, 0.5, 1.0], value=0.1)
@@ -553,8 +582,8 @@ with tab_boost:
 **Why this tab matters:**
 
 - `Boosting` (RF-S) and Lasso solve the **same statistical problem** (L1-regularized regression) via different computational strategies.
-- RF-S traces the **regularization path incrementally** — each iteration updates the coefficient most correlated with the current residual.
-- Lasso solves it with QP. As step_size → 0, both converge to the same path (Efron et al., 2004).
+- RF-S traces the **regularization path incrementally** as each iteration updates the coefficient most correlated with the current residual.
+- Lasso solves it with QP. As step_size tends to 0, both converge to the same path (Efron et al., 2004).
 - This tab makes that connection concrete: coefficients, R², and compute time side by side.
             """)
 
@@ -565,8 +594,8 @@ with tab_graph:
     st.subheader("Weight graph W")
     st.markdown(
         "The graph structure determines which pairs of points can fuse. "
-        "An edge (i, j) with high weight → strong pressure for centers u_i and u_j to converge. "
-        "No edge → no fusion pressure between those two points."
+        "An edge (i, j) with high weight implies strong pressure for centers u_i and u_j to converge. "
+        "If there is no edge, there is no fusion pressure between those two points."
     )
 
     col_g1, col_g2 = st.columns([1, 2], gap="large")
@@ -720,8 +749,8 @@ with tab_graph:
             st.markdown("""
 **Why the graph matters:**
 
-- `ConvexClusterer` can only fuse points that are connected by an edge. The graph structure **defines the space of possible clusters**.
+- The underlying graph is a **key factor** in the clustering behavior. If we know prior structure of our data, we can code it into the graph and leverage it for better clustering results.
 - `knn_w(X, k, phi)` creates edges only to the `k` nearest neighbors, with weight `exp(-phi·d(i,j))`.
-- Higher `k` → denser graph → more pairs under fusion pressure.
-- Higher `phi` → weights decay faster → only immediate neighbors have real influence.
+- Higher `k`, implies denser graph which also implies more pairs will fuse.
+- Higher `phi` implies only immediate neighbors have real influence.
             """)
