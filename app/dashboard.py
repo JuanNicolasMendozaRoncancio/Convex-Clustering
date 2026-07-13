@@ -129,16 +129,12 @@ tab_cluster, tab_boost, tab_graph = st.tabs([
 with tab_cluster:
     col_ctrl, col_plot = st.columns([1, 2], gap="large")
     st.markdown(
-        "This tab allows you to run convex clustering interactively." \
+        "This tab allows you to run convex clustering interactively. " \
         "You can set the dataset, algorithm, and hyperparameters, then visualize the results." \
-        " Nevertheless, you should be carefull selectimg the hiperparemeters, for instance for DR, the step size should be large" \
-        "While for all the others it should be small. Also, for ADMM and AMA, you should use step sizes smaller than 1.0." \
+        " Nevertheless, you should be carefull selecting the hyperparameters. For instance for DR, the step size should be large " \
+        "while for all the others it should be small. Also, for ADMM and AMA, you should use step sizes smaller than 1.0. " \
         "Use a great value of gamma to get a small number of clusters, and a small value to get a large number of clusters.\n"
-        ""  \
-        "Have fun! :D\n." \
-        "" \
-        "Note: Fast_RFS2 only shows the last iteration, you can play with the gamma value to see the cluster path." \
-    )
+        )
 
     with col_ctrl:
         st.subheader("Data")
@@ -152,7 +148,7 @@ with tab_cluster:
         st.subheader("Algorithm")
         algorithm = st.selectbox(
             "Algorithm",
-            ["ADMM", "AMA", "DR", "RFS_L2", "Fast_RFS_L2", "RFS_L1", "Fast_RFS_L1"],
+            ["ADMM", "AMA", "DR", "RFS_L2", "RFS_L1", "Fast_RFS_L1"],
             index=2,  # DR default — converges faster on well-conditioned graphs
             help="All algorithms solve the same convex problem via different computational strategies.",
         )
