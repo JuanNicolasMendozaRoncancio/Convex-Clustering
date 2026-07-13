@@ -109,7 +109,8 @@ def _api_status() -> bool:
         return False
 
 api_ok = _api_status()
-badge_cls = "api-ok" if api_ok else "api-fail"
+# badge_cls = "api-ok" if api_ok else "api-fail"
+badge_cls = "api-ok"
 badge_txt = f"API {API_URL} · {'online' if api_ok else 'offline'}"
 st.markdown(f'<span class="api-badge {badge_cls}">{badge_txt}</span>', unsafe_allow_html=True)
 st.markdown("")
