@@ -13,7 +13,6 @@ from pathlib import Path
 import networkx as nx
 import numpy as np
 import plotly.graph_objects as go
-import requests
 import streamlit as st
 from sklearn.datasets import make_blobs, make_circles, make_moons, make_regression
 from sklearn.linear_model import Lasso
@@ -114,10 +113,9 @@ st.markdown("""
 # st.markdown(f'<span class="api-badge {badge_cls}">{badge_txt}</span>', unsafe_allow_html=True)
 # st.markdown("")
 
-from convex_clustering import __version__
 
 st.markdown(
-    f'<span class="api-badge api-ok">API online</span>',
+    '<span class="api-badge api-ok">API online</span>',
     unsafe_allow_html=True,
 )
 st.markdown("")
