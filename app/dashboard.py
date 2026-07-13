@@ -117,7 +117,7 @@ st.markdown("""
 from convex_clustering import __version__
 
 st.markdown(
-    f'<span class="api-badge api-ok">standalone · convex-clustering v{__version__}</span>',
+    f'<span class="api-badge api-ok">API online</span>',
     unsafe_allow_html=True,
 )
 st.markdown("")
