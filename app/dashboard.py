@@ -101,18 +101,25 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # API status badge
-def _api_status() -> bool:
-    try:
-        r = requests.get(f"{API_URL}/", timeout=2)
-        return r.status_code == 200
-    except Exception:
-        return False
+# def _api_status() -> bool:
+#     try:
+#         r = requests.get(f"{API_URL}/", timeout=2)
+#         return r.status_code == 200
+#     except Exception:
+#         return False
 
-api_ok = _api_status()
+# api_ok = _api_status()
 # badge_cls = "api-ok" if api_ok else "api-fail"
-badge_cls = "api-ok"
-badge_txt = f"API {API_URL} · {'online' if api_ok else 'offline'}"
-st.markdown(f'<span class="api-badge {badge_cls}">{badge_txt}</span>', unsafe_allow_html=True)
+# badge_txt = f"API {API_URL} · {'online' if api_ok else 'offline'}"
+# st.markdown(f'<span class="api-badge {badge_cls}">{badge_txt}</span>', unsafe_allow_html=True)
+# st.markdown("")
+
+from convex_clustering import __version__
+
+st.markdown(
+    f'<span class="api-badge api-ok">standalone · convex-clustering v{__version__}</span>',
+    unsafe_allow_html=True,
+)
 st.markdown("")
 
 # ---------------------------------------------------------------------------
