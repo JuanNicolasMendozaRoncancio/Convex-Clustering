@@ -1,0 +1,66 @@
+site_name: Convex Clustering
+site_description: >
+  Convex interpretable clustering via ADMM, AMA, Douglas-Rachford,
+  and RF-S variants. Scikit-learn compatible.
+site_author: Juan Nicolás Mendoza Roncancio
+site_url: https://juannicolasmendozaroncancio.github.io/Convex-Clustering/
+ 
+repo_name: JuanNicolasMendozaRoncancio/Convex-Clustering
+repo_url: https://github.com/JuanNicolasMendozaRoncancio/Convex-Clustering
+ 
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+ 
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            docstring_style: numpy
+            show_source: true
+            show_root_heading: true
+            heading_level: 2
+            members_order: source
+ 
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - pymdownx.inlinehilite
+  - toc:
+      permalink: true
+ 
+nav:
+  - Home: index.md
+  - User Guide:
+    - Algorithms: algorithms.md
+    - Regression: regression.md
+  - API Reference:
+    - Clustering: reference/clustering.md
+    - Regression: reference/regression.md
+    - Utilities: reference/utils.md
+  - REST API: api.md

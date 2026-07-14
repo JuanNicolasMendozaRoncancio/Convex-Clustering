@@ -36,22 +36,35 @@ def admm(X: npt.NDArray[np.float64],
          ) -> _AlgoResult:
     """
     ADMM algorithm for convex clustering.
-
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        W : array-like, shape (n, n), matrix with the weights of our garph.
-        gamma : float, regularization parameter.
-        nu : float, step size for the dual variable update.
-        max_iter : int, maximum number of iterations.
-        tol : float, tolerance for convergence.
-        verbose : bool, if True, print convergence information.
-
+    X : array-like of shape (n_samples, n_features)
+        Data matrix. Internally transposed to (n_features, n_samples)
+        for the algorithm computation.
+    W : array-like of shape (n_samples, n_samples)
+        Weight matrix encoding the graph structure.
+        W[i, j] > 0 means there is an edge between points i and j.
+    gamma : float
+        Regularization parameter.
+    nu : float, optional
+        Dual step size, by default 1.
+    max_iter : int, optional
+        Maximum number of iterations, by default 1000.
+    tol : float, optional
+        Convergence tolerance on the max center difference, by default 1e-5.
+    verbose : bool, optional
+        If True, print convergence info every 50 iterations, by default False.
+ 
     Returns
     -------
-        U : array-like, shape (p, n), the final cluster centers.
-        history : dict, containing the history of the difference on centers.
-        U_history : dict, containing the history of the centers at each iteration. 
+    U : ndarray of shape (n_features, n_samples)
+        Final cluster centers (transposed convention — ConvexClusterer.fit
+        transposes back to sklearn convention before storing).
+    history : dict of {int: float}
+        Convergence history mapping iteration index to center difference.
+    U_history : dict of {int: ndarray}
+        Centers at each iteration (transposed convention).
     """
     X = X.T
     edges, weights = built_edges(W)
@@ -123,22 +136,34 @@ def ama(    X: npt.NDArray[np.float64],
 ) -> _AlgoResult:
     """
     AMA algorithm for convex clustering.
-
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        W : array-like, shape (n, n), matrix with the weights of our garph.
-        gamma : float, regularization parameter.
-        nu : float, step size for the dual variable update.
-        max_iter : int, maximum number of iterations.
-        tol : float, tolerance for convergence.
-        verbose : bool, if True, print convergence information.
-
+    X : array-like of shape (n_samples, n_features)
+        Data matrix. Internally transposed to (n_features, n_samples)
+        for the algorithm computation.
+    W : array-like of shape (n_samples, n_samples)
+        Weight matrix encoding the graph structure.
+        W[i, j] > 0 means there is an edge between points i and j.
+    gamma : float
+        Regularization parameter.
+    nu : float
+        Primal step size.
+    max_iter : int, optional
+        Maximum number of iterations, by default 1000.
+    tol : float, optional
+        Convergence tolerance on the max center difference, by default 1e-5.
+    verbose : bool, optional
+        If True, print convergence info every 50 iterations, by default False.
+ 
     Returns
     -------
-        U_curr : array-like, shape (p, n), the final cluster centers.
-        history : dict, containing the history of the difference on centers.
-        Centers_history : dict, containing the history of the centers at each iteration.
+    U_curr : ndarray of shape (n_features, n_samples)
+        Final cluster centers (transposed convention).
+    history : dict of {int: float}
+        Convergence history mapping iteration index to center difference.
+    Centers_history : dict of {int: ndarray}
+        Centers at each iteration (transposed convention).
     """
     X = X.T
     p, _ = X.shape
@@ -212,21 +237,31 @@ def dr_primal(
 ) -> _AlgoResult:
     """
     DR algorithm for convex clustering.
-
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        W : array-like, shape (n, n), matrix with the weights of our garph.
-        gamma : float, regularization parameter.
-        rho : float, step size for the dual variable update.
-        max_iter : int, maximum number of iterations.
-        tol : float, tolerance for convergence.
-
+    X : array-like of shape (n_samples, n_features)
+        Data matrix in sklearn convention (rows = samples).
+    W : array-like of shape (n_samples, n_samples)
+        Weight matrix encoding the graph structure.
+        W[i, j] > 0 means there is an edge between points i and j.
+    gamma : float
+        Regularization parameter.
+    rho : float
+        Splitting parameter (step size for the dual variable update).
+    max_iter : int, optional
+        Maximum number of iterations, by default 1000.
+    tol : float, optional
+        Convergence tolerance, by default 1e-5.
+ 
     Returns
     -------
-        U_final : array-like, shape (p, n), the final cluster centers.
-        history : dict, containing the history of the difference on centers.
-        U_hist : dict, containing the history of the centers at each iteration.
+    U_final : ndarray of shape (n_samples, n_features)
+        Final cluster centers in sklearn convention.
+    history : dict of {int: float}
+        Convergence history mapping iteration index to center difference.
+    U_hist : dict of {int: ndarray}
+        Centers at each iteration.
     """
     n, p = X.shape
 
@@ -286,21 +321,30 @@ def centers_rfs_l2(
     numiter: int = 5000,
 ) -> _AlgoResult:
     """
-    Applies the FRFS algorithm for convex clustering.
-
+    Regularized Forward Stagewise clustering with L2 group penalty.
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        W : array-like, shape (n, n), matrix with the weights of our garph.
-        gamma : float, regularization parameter.
-        epsilon : float, step size for the primal variable update.
-        numiter : int, maximum number of iterations.
-
+    X : array-like of shape (n_samples, n_features)
+        Data matrix in sklearn convention (rows = samples).
+    W : array-like of shape (n_samples, n_samples)
+        Weight matrix encoding the graph structure.
+        W[i, j] > 0 means there is an edge between points i and j.
+    gamma : float, optional
+        Regularization parameter, by default 10.
+    epsilon : float, optional
+        Stagewise step size, by default 0.01.
+    numiter : int, optional
+        Number of stagewise steps (no early stopping), by default 5000.
+ 
     Returns
     -------
-        U_final: array-like, shape (p, n), the final cluster centers.
-        history : dict, containing the history of the difference on centers.
-        Centers_hist : dict, containing the history of the centers at each iteration.
+    U_final : ndarray of shape (n_samples, n_features)
+        Final cluster centers.
+    history : dict of {int: float}
+        Convergence history mapping iteration index to center difference.
+    Centers_hist : dict of {int: ndarray}
+        Centers at each iteration.
     """
     n, p = X.shape
 
@@ -391,21 +435,32 @@ def centers_fast_rfs_l2(
     numiter: int = 10000,
 ) -> _AlgoResult:
     """
-    Applies the Fast RF-S algorithm for convex clustering.
-
+    Fast Regularized Forward Stagewise clustering with L2 group penalty.
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        W : array-like, shape (n, n), matrix with the weights of our garph.
-        gammas : list, regularization parameters.
-        epsilon : float, step size for the primal variable update.
-        numiter : int, maximum number of iterations.
-
+    X : array-like of shape (n_samples, n_features)
+        Data matrix in sklearn convention (rows = samples).
+    W : array-like of shape (n_samples, n_samples)
+        Weight matrix encoding the graph structure.
+        W[i, j] > 0 means there is an edge between points i and j.
+    gammas : list of float or None, optional
+        Regularization parameters. Pass a list to trace the full path.
+        If None, defaults to [10].
+    epsilon : float, optional
+        Stagewise step size, by default 0.01.
+    numiter : int, optional
+        Number of stagewise steps per gamma value, by default 10000.
+ 
     Returns
     -------
-        U_final: array-like, shape (p, n), the final cluster centers.
-        History: dict, containing the history of the objective function values at each iteration.
-        Center_hist: dict, containing the history of the centers at each iteration.
+    U_final : ndarray of shape (n_samples, n_features)
+        Final cluster centers (result at the last gamma value).
+    history : dict of {int: float}
+        History mapping gamma index to center difference between consecutive
+        gamma steps. Contains one entry per gamma value (not per iteration).
+    Center_hist : dict of {int: ndarray}
+        Centers at each gamma value.
     """
     if gammas is None:
         gammas = [10]
@@ -440,22 +495,33 @@ def centers_rfs_l1(
     M: int = 1000,
 ) -> _AlgoResult:
     """
-    Applies the RF-S algorithm for convex clustering with L1 norm.
-
+    Regularized Forward Stagewise clustering with L1 entry-wise penalty.
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        W : array-like, shape (n, n), matrix with the weights of our garph.
-        gamma : float, regularization parameter.
-        epsilon : float, step size for the primal variable update.
-        cauchy : float, convergence threshold for the centers.
-        M : int, maximum number of iterations.
-
+    X : array-like of shape (n_samples, n_features)
+        Data matrix in sklearn convention (rows = samples).
+    W : array-like of shape (n_samples, n_samples)
+        Weight matrix encoding the graph structure.
+        W[i, j] > 0 means there is an edge between points i and j.
+    gamma : float
+        Regularization parameter.
+    epsilon : float, optional
+        Stagewise step size, by default 0.01.
+    cauchy : float, optional
+        Convergence threshold on the Frobenius norm of the center difference,
+        by default 1e-5.
+    M : int, optional
+        Maximum number of iterations, by default 1000.
+ 
     Returns
     -------
-        U_final: array-like, shape (p, n), the final cluster centers.
-        history : dict, containing the history of the difference on centers.
-        U_hist : dict, containing the history of the centers at each iteration.
+    U_final : ndarray of shape (n_samples, n_features)
+        Final cluster centers.
+    history : dict of {int: float}
+        Convergence history mapping iteration index to center difference.
+    U_hist : dict of {int: ndarray}
+        Centers at each iteration.
     """
     n, p = X.shape
 
@@ -515,22 +581,33 @@ def centers_fast_rfs_l1(
     M: int = 1000,
 ) -> _AlgoResult:
     """
-    Applies the Fast RF-S algorithm for convex clustering with L1 norm.
-    
+    Fast Regularized Forward Stagewise clustering with L1 entry-wise penalty.
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        W : array-like, shape (n, n), matrix with the weights of our garph.
-        gamma : float, regularization parameter.
-        epsilon : float, step size for the primal variable update.
-        cauchy : float, convergence threshold for the centers.
-        M : int, maximum number of iterations.
-
+    X : array-like of shape (n_samples, n_features)
+        Data matrix in sklearn convention (rows = samples).
+    W : array-like of shape (n_samples, n_samples)
+        Weight matrix encoding the graph structure.
+        W[i, j] > 0 means there is an edge between points i and j.
+    gamma : float
+        Regularization parameter.
+    epsilon : float, optional
+        Stagewise step size, by default 0.01.
+    cauchy : float, optional
+        Convergence threshold on the Frobenius norm of the center difference,
+        by default 1e-5.
+    M : int, optional
+        Maximum number of iterations, by default 1000.
+ 
     Returns
     -------
-        U_final: array-like, shape (p, n), the final cluster centers.
-        History: dict, containing the history of the difference on centers.
-        U_hist : dict, containing the history of the centers at each iteration.    
+    U_final : ndarray of shape (n_samples, n_features)
+        Final cluster centers.
+    history : dict of {int: float}
+        Convergence history mapping iteration index to center difference.
+    U_hist : dict of {int: ndarray}
+        Centers at each iteration.
     """
     n, p = X.shape
 
@@ -604,28 +681,28 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
  
     Parameters
     ----------
-    algorithm : str, default='ADMM'
-        Algorithm to use. One of:
-        'ADMM', 'AMA', 'DR', 'RFS_L2', 'FastRFS_L2', 'RFS_L1', 'FastRFS_L1'.
-    gamma : float, default=1.0
-        Regularization parameter controlling the strength of the fusion penalty.
-        Higher gamma → fewer, larger clusters.
-    step_size : float, default=1.0
-        Step size for the iterative update. Maps to:
+    algorithm : str, optional
+        Algorithm to use, by default 'ADMM'. One of:
+        'ADMM', 'AMA', 'DR', 'RFS_L2', 'Fast_RFS_L2', 'RFS_L1', 'Fast_RFS_L1'.
+    gamma : float, optional
+        Regularization parameter controlling the strength of the fusion penalty,
+        by default 1.0. Higher gamma produces fewer, larger clusters.
+    step_size : float, optional
+        Step size for the iterative update, by default 0.01. Maps to:
         nu (ADMM, AMA), rho (DR), epsilon (RFS variants).
-    max_iter : int, default=1000
-        Maximum number of iterations. Maps to:
-        max_iter (ADMM, AMA, DR), numiter (RFS_L2, FastRFS_L2), M (RFS_L1, FastRFS_L1).
-    tol : float, default=1e-5
-        Convergence tolerance. Maps to:
-        tol (ADMM, AMA, DR), cauchy (RFS_L1, FastRFS_L1).
-        Not used by RFS_L2 and FastRFS_L2, which run for exactly max_iter steps.
-    verbose : bool, default=False
-        If True, print convergence information at every 50 iterations.
-        Only supported by ADMM and AMA; ignored by other algorithms.
-    merge_tol : float, default=1e-3
+    max_iter : int, optional
+        Maximum number of iterations, by default 1000. Maps to:
+        max_iter (ADMM, AMA, DR), numiter (RFS_L2, Fast_RFS_L2), M (RFS_L1, Fast_RFS_L1).
+    tol : float, optional
+        Convergence tolerance, by default 1e-5. Maps to:
+        tol (ADMM, AMA, DR), cauchy (RFS_L1, Fast_RFS_L1).
+        Not used by RFS_L2 and Fast_RFS_L2, which run for exactly max_iter steps.
+    verbose : bool, optional
+        If True, print convergence information at every 50 iterations,
+        by default False. Only supported by ADMM and AMA.
+    merge_tol : float, optional
         Distance threshold below which two final centers are considered
-        the same cluster when extracting labels.
+        the same cluster when extracting labels, by default 1e-1.
  
     Attributes
     ----------
@@ -636,7 +713,7 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         Final cluster centers. Points in the same cluster share the same center.
     history_ : dict of {int: float}
         Convergence history mapping iteration index to the center difference value.
-    centers_history_ : dict of {int: ndarray}
+    centers_hist_ : dict of {int: ndarray}
         Full trajectory of centers at each iteration.
     n_iter_ : int
         Number of iterations actually run.
@@ -686,12 +763,11 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-            Data matrix. Convention follows the algorithm implementations:
-            rows are samples, columns are features.
+            Data matrix. Rows are samples, columns are features.
         W : ndarray of shape (n_samples, n_samples)
             Symmetric weight matrix encoding the graph structure.
             W[i, j] > 0 means there is an edge between points i and j.
-        y : ignored
+        y : None
             Not used. Present for sklearn API compatibility.
  
         Returns
@@ -794,12 +870,16 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
+            Data matrix.
         W : ndarray of shape (n_samples, n_samples)
-        y : ignored
+            Weight matrix.
+        y : None
+            Not used.
  
         Returns
         -------
         labels : ndarray of shape (n_samples,)
+            Cluster label for each point.
         """
         return self.fit(X,W).labels_
 
@@ -819,16 +899,17 @@ class ConvexClusterer(BaseEstimator, ClusterMixin): # type: ignore[misc]
         centers are exactly equal (up to numerical precision) — there is no
         notion of "closest centroid" as in k-means. Connected components
         correctly handles chains of fused points without a fixed k.
-        
+ 
         Parameters
         ----------
         U_final : ndarray of shape (n_samples, n_features)
-
+            Final cluster centers.
+ 
         Returns
         -------
-        labels : ndarray of shape (n_samples,), dtype int
+        labels : ndarray of shape (n_samples,)
+            Integer cluster label for each point.
         """
-
         dist = squareform(pdist(U_final))
         adjacency = (dist < self.merge_tol).astype(np.float64)
         np.fill_diagonal(adjacency, 0.0)

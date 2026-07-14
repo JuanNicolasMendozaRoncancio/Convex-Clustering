@@ -9,17 +9,23 @@ from sklearn.base import BaseEstimator, RegressorMixin
 def _normalize_sparse(X: npt.NDArray[np.float64],
                       y: npt.NDArray[np.float64]) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """
-    Normalizes the data matrix X and the target vector y for sparse data.
-
+    Normalize the data matrix X and target vector y.
+ 
+    Centers y and normalizes columns of X to unit norm.
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        y : array-like, shape (n,), target vector.
-
+    X : array-like of shape (n_features, n_samples)
+        Data matrix (note: transposed convention used internally).
+    y : array-like of shape (n_samples,)
+        Target vector.
+ 
     Returns
     -------
-        X_normalized : array-like, shape (p, n), normalized data matrix.
-        y_normalized : array-like, shape (n,), normalized target vector.
+    X_normalized : ndarray of shape (n_features, n_samples)
+        Column-normalized data matrix.
+    y_normalized : ndarray of shape (n_samples,)
+        Mean-centered target vector.
     """
     y = y - y.mean()
     mean = np.mean(X, axis=0)
@@ -43,18 +49,32 @@ def rfs_sparse(X: npt.NDArray[np.float64],
                numiter: int) -> npt.NDArray[np.float64]:
     """
     RF-S algorithm for linear regression (dense and sparse data).
-
+ 
+    Implements the incremental forward stagewise path. As epsilon → 0
+    the path converges to the Lasso solution path (Efron et al., 2004).
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        y : array-like, shape (n,), target vector.
-        delta : float, regularization parameter. Must satisfy 0 < epsilon < delta.
-        epsilon : float, learning rate. Must satisfy 0 < epsilon < delta.
-        numiter : int, number of iterations.
-
+    X : array-like of shape (n_samples, n_features)
+        Data matrix in sklearn convention. Transposed internally.
+    y : array-like of shape (n_samples,)
+        Target vector.
+    delta : float
+        L1 regularization parameter. Must satisfy 0 < epsilon < delta.
+    epsilon : float
+        Step size for the coefficient update. Must satisfy 0 < epsilon < delta.
+    numiter : int
+        Number of iterations (no early stopping).
+ 
     Returns
     -------
-        b : ndarray, shape (p,), regression coefficients.
+    b : ndarray of shape (n_features,)
+        Regression coefficients.
+ 
+    Raises
+    ------
+    ValueError
+        If epsilon <= 0, delta <= 0, or epsilon >= delta.
     """
     if epsilon <= 0:
         raise ValueError("epsilon must be positive.")
@@ -91,19 +111,29 @@ def fastrfs_sparse(X: npt.NDArray[np.float64],
                    epsilon: float,
                    numiter: int) -> npt.NDArray[np.float64]:
     """
-    Implements the Fast RF-S algorithm with sparce data
-
+    Fast RF-S algorithm for linear regression (dense and sparse data).
+ 
+    Accelerated version of rfs_sparse that maintains a running correlation
+    vector updated in closed form, avoiding a full matrix-vector product
+    per iteration.
+ 
     Parameters
     ----------
-        X : array-like, shape (p, n), data matrix with p features and n samples.
-        y : array-like, shape (n,), target vector.
-        delta : float, regularization parameter.
-        epsilon : float, step size for the primal variable update.
-        numiter : int, maximum number of iterations.
-
+    X : array-like of shape (n_samples, n_features)
+        Data matrix in sklearn convention.
+    y : array-like of shape (n_samples,)
+        Target vector.
+    delta : float
+        L1 regularization parameter.
+    epsilon : float
+        Step size for the coefficient update.
+    numiter : int
+        Number of iterations (no early stopping).
+ 
     Returns
     -------
-        b : array-like, shape (p,), the rsulting coefficients.
+    b : ndarray of shape (n_features,)
+        Regression coefficients.
     """
     X, y = _normalize_sparse(X, y)
     r = y.copy()
@@ -127,32 +157,33 @@ def fastrfs_sparse(X: npt.NDArray[np.float64],
 class Boosting(BaseEstimator, RegressorMixin): # type: ignore[misc]
     """
     Forward stagewise boosting regressor via RF-S / Fast RF-S.
-
+ 
     Wraps rfs_sparse and fastrfs_sparse behind a scikit-learn-compatible
     fit()/predict() interface. Both underlying algorithms solve the same
     L1-regularized regression problem — the incremental forward stagewise
     path, which converges to the Lasso solution path as step_size -> 0
     (Efron et al., 2004) — so 'algorithm' selects a computational strategy,
     not a different statistical model.
-
+ 
     Parameters
     ----------
-    algorithm : str, default='FastRFS'
-        One of 'RFS', 'FastRFS'.
-    delta : float, default=1.0
-        L1 regularization parameter. Must satisfy 0 < step_size < delta.
-    step_size : float, default=0.01
-        Step size for the iterative coefficient update.
-    max_iter : int, default=1000
-        Number of iterations to run (no early stopping; both algorithms
-        run for exactly max_iter steps).
-
+    algorithm : str, optional
+        One of 'RFS', 'FastRFS', by default 'FastRFS'.
+    delta : float, optional
+        L1 regularization parameter, by default 1.0.
+        Must satisfy 0 < step_size < delta.
+    step_size : float, optional
+        Step size for the iterative coefficient update, by default 0.01.
+    max_iter : int, optional
+        Number of iterations to run, by default 1000. No early stopping;
+        both algorithms run for exactly max_iter steps.
+ 
     Attributes
     ----------
     coef_ : ndarray of shape (n_features,)
         Fitted regression coefficients.
     n_iter_ : int
-        Number of iterations actually run (== max_iter).
+        Number of iterations actually run (always equals max_iter).
     """
 
     _ALGORITHMS = frozenset({'RFS', 'FastRFS'})
@@ -175,16 +206,19 @@ class Boosting(BaseEstimator, RegressorMixin): # type: ignore[misc]
     ) -> Boosting:
         """
         Fit coefficients via forward stagewise boosting.
-
+ 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
+            Data matrix.
         y : ndarray of shape (n_samples,)
-
+            Target vector.
+ 
         Returns
         -------
         self : Boosting
-
+            Fitted estimator.
+ 
         Raises
         ------
         ValueError
@@ -209,14 +243,16 @@ class Boosting(BaseEstimator, RegressorMixin): # type: ignore[misc]
     def predict(self, X: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Predict target values as X @ coef_.
-
+ 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
-
+            Data matrix.
+ 
         Returns
         -------
         y_pred : ndarray of shape (n_samples,)
+            Predicted target values.
         """
         X = np.asarray(X, dtype=np.float64)
         return X @ self.coef_

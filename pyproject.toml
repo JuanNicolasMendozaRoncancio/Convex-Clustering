@@ -81,6 +81,12 @@ dashboard = [
     "networkx>=3.3",
 ]
 
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "mkdocstrings[python]>=0.25"
+]
+
 all = [
     "convex-clustering[viz,api,dashboard]",
 ]
