@@ -6,6 +6,8 @@ from pathlib import Path
 
 import mlflow
 import numpy as np
+import numpy.typing as npt
+from typing import Any
 import pandas as pd
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.metrics import davies_bouldin_score, silhouette_score
@@ -21,26 +23,26 @@ _RESULTS_DIR = Path("results/benchmark")
 
 _DATASETS = ["blobs", "moons", "circles"]
 
-_CONVEX_PARAMS: dict[str, dict] ={
+_CONVEX_PARAMS: dict[str, dict[str, Any]] ={
     "blobs": {"algorithm": "ADMM", "gamma":100, "step_size": 0.05, "max_iter": 100000, "merge_tol": 0.5},
     "moons": {"algorithm": "DR", "gamma": 10000, "step_size": 0.5, "max_iter": 1000, "merge_tol": 0.5},
     "circles": {"algorithm": "DR", "gamma": 10000, "step_size": 0.5, "max_iter": 1000, "merge_tol": 0.5},
 }
 
-_KMEANS_PARAMS: dict[str, dict] = {
+_KMEANS_PARAMS: dict[str, dict[str, Any]] = {
     "blobs": {"n_clusters": 3, "random_state": 42, "n_init": 10},
     "moons": {"n_clusters": 2, "random_state": 42, "n_init": 10},
     "circles": {"n_clusters": 2, "random_state": 42, "n_init": 10},
 }
 
-_DBSCAN_PARAMS: dict[str, dict] = {
+_DBSCAN_PARAMS: dict[str, dict[str, Any]] = {
     "blobs": {"eps": 0.5, "min_samples": 5},
     "moons": {"eps": 0.15, "min_samples": 5},
     "circles": {"eps": 0.15, "min_samples": 5},
 }
 
 
-def _run_model(model, X:np.array) -> tuple[np.array, float, float]:
+def _run_model(model: ConvexClusterer | KMeans | DBSCAN, X: npt.NDArray[np.float64]) -> tuple[npt.NDArray[np.int_], float, float]:
     """
     Adjust the model, saves time and memory usage
 
@@ -72,11 +74,11 @@ def _run_model(model, X:np.array) -> tuple[np.array, float, float]:
 
 
 def _compute_metrics(
-        X: np.array,
-        labels: np.array,
+        X: npt.NDArray[np.float64],
+        labels: npt.NDArray[np.int_],
         elapsed: float,
         peak_mb: float,
-) -> dict:
+) -> dict[str, Any]:
     """
     Computes silhouette score, Davies-Bouldin score and compute metrics
     """
@@ -106,12 +108,10 @@ def run_benchmark() -> pd.DataFrame:
     mlflow.set_experiment(_EXPERIMENT_NAME)
 
     _RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-    records: list[dict] = []
+    records: list[dict[str, Any]] = []
 
     for dataset_name in _DATASETS:
-        print(f"\n{"="*60}")
-        print(f"Processing dataset: {dataset_name}")
-        print(f"{"="*60}")
+        print(f"\nProcessing dataset: {dataset_name}")
 
         X_raw, y_true = load_dataset(dataset_name)
         n_true_clusters = len(set(y_true.tolist()))
@@ -182,7 +182,7 @@ def run_benchmark() -> pd.DataFrame:
             print(f"    peak memory    : {metrics['peak_memory_mb']:.2f}MB")
 
         df = pd.DataFrame(records)
-        csv_path = _RESULTS_DIR / f"benchmark_results.csv"
+        csv_path = _RESULTS_DIR / "benchmark_results.csv"
         df.to_csv(csv_path, index=False)
         print(f"\nBenchmark results saved to: {csv_path}")
     
