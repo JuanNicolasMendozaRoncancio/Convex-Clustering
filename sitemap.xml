@@ -2,30 +2,34 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://juannicolasmendozaroncancio.github.io/Convex-Clustering/</loc>
-         <lastmod>2026-07-14</lastmod>
+         <lastmod>2026-07-16</lastmod>
     </url>
     <url>
          <loc>https://juannicolasmendozaroncancio.github.io/Convex-Clustering/algorithms/</loc>
-         <lastmod>2026-07-14</lastmod>
+         <lastmod>2026-07-16</lastmod>
     </url>
     <url>
          <loc>https://juannicolasmendozaroncancio.github.io/Convex-Clustering/api/</loc>
-         <lastmod>2026-07-14</lastmod>
+         <lastmod>2026-07-16</lastmod>
+    </url>
+    <url>
+         <loc>https://juannicolasmendozaroncancio.github.io/Convex-Clustering/benchmark/</loc>
+         <lastmod>2026-07-16</lastmod>
     </url>
     <url>
          <loc>https://juannicolasmendozaroncancio.github.io/Convex-Clustering/regression/</loc>
-         <lastmod>2026-07-14</lastmod>
+         <lastmod>2026-07-16</lastmod>
     </url>
     <url>
          <loc>https://juannicolasmendozaroncancio.github.io/Convex-Clustering/reference/clustering/</loc>
-         <lastmod>2026-07-14</lastmod>
+         <lastmod>2026-07-16</lastmod>
     </url>
     <url>
          <loc>https://juannicolasmendozaroncancio.github.io/Convex-Clustering/reference/regression/</loc>
-         <lastmod>2026-07-14</lastmod>
+         <lastmod>2026-07-16</lastmod>
     </url>
     <url>
          <loc>https://juannicolasmendozaroncancio.github.io/Convex-Clustering/reference/utils/</loc>
-         <lastmod>2026-07-14</lastmod>
+         <lastmod>2026-07-16</lastmod>
     </url>
 </urlset>

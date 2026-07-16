@@ -13,13 +13,13 @@
         <meta name="author" content="Juan Nicolás Mendoza Roncancio">
       
       
-        <link rel="canonical" href="https://juannicolasmendozaroncancio.github.io/Convex-Clustering/regression/">
+        <link rel="canonical" href="https://juannicolasmendozaroncancio.github.io/Convex-Clustering/benchmark/">
       
       
-        <link rel="prev" href="../algorithms/">
+        <link rel="prev" href="../regression/">
       
       
-        <link rel="next" href="../benchmark/">
+        <link rel="next" href="../reference/clustering/">
       
       
         
@@ -30,7 +30,7 @@
     
     
       
-        <title>Regression - Convex Clustering</title>
+        <title>Benckmark - Convex Clustering</title>
       
     
     
@@ -83,7 +83,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#regression" class="md-skip">
+        <a href="#benchmark" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Regression
+              Benckmark
             
           </span>
         </div>
@@ -465,6 +465,34 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../regression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -484,7 +512,7 @@
   <span class="md-ellipsis">
     
   
-    Regression
+    Benckmark
   
 
     
@@ -502,7 +530,7 @@
   <span class="md-ellipsis">
     
   
-    Regression
+    Benckmark
   
 
     
@@ -528,10 +556,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#boosting" class="md-nav__link">
+  <a href="#experimental-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Boosting
+        Experimental Setup
       
     </span>
   </a>
@@ -539,22 +567,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#algorithm-details" class="md-nav__link">
+  <a href="#results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Algorithm details
+        Results
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Algorithm details">
+    <nav class="md-nav" aria-label="Results">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#rfs-regularized-forward-stagewise" class="md-nav__link">
+  <a href="#blobs-well-separated-gaussian-clusters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        RFS (Regularized Forward Stagewise)
+        blobs — well-separated Gaussian clusters
       
     </span>
   </a>
@@ -562,10 +590,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fastrfs-fast-regularized-forward-stagewise" class="md-nav__link">
+  <a href="#moons-non-convex-geometry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        FastRFS (Fast Regularized Forward Stagewise)
+        moons — non-convex geometry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#circles-nested-geometry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        circles — nested geometry
       
     </span>
   </a>
@@ -578,10 +617,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#relationship-to-the-lasso" class="md-nav__link">
+  <a href="#summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Relationship to the Lasso
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducibility
       
     </span>
   </a>
@@ -592,34 +642,6 @@
   
 </nav>
       
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../benchmark/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Benckmark
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -829,10 +851,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#boosting" class="md-nav__link">
+  <a href="#experimental-setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Boosting
+        Experimental Setup
       
     </span>
   </a>
@@ -840,22 +862,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#algorithm-details" class="md-nav__link">
+  <a href="#results" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Algorithm details
+        Results
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Algorithm details">
+    <nav class="md-nav" aria-label="Results">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#rfs-regularized-forward-stagewise" class="md-nav__link">
+  <a href="#blobs-well-separated-gaussian-clusters" class="md-nav__link">
     <span class="md-ellipsis">
       
-        RFS (Regularized Forward Stagewise)
+        blobs — well-separated Gaussian clusters
       
     </span>
   </a>
@@ -863,10 +885,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#fastrfs-fast-regularized-forward-stagewise" class="md-nav__link">
+  <a href="#moons-non-convex-geometry" class="md-nav__link">
     <span class="md-ellipsis">
       
-        FastRFS (Fast Regularized Forward Stagewise)
+        moons — non-convex geometry
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#circles-nested-geometry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        circles — nested geometry
       
     </span>
   </a>
@@ -879,10 +912,21 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#relationship-to-the-lasso" class="md-nav__link">
+  <a href="#summary" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Relationship to the Lasso
+        Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducibility
       
     </span>
   </a>
@@ -909,85 +953,258 @@
   
 
 
-<h1 id="regression">Regression<a class="headerlink" href="#regression" title="Permanent link">&para;</a></h1>
-<p>The <code>regression</code> module implements <strong>forward stagewise boosting</strong> via two
-algorithms: RF-S and Fast RF-S. Both solve the same L1-regularized regression
-problem — the incremental forward stagewise path, which converges to the Lasso
-solution path as <code>step_size → 0</code> (Efron et al., 2004). The <code>algorithm</code>
-parameter selects a computational strategy, not a different statistical model.</p>
+<h1 id="benchmark">Benchmark<a class="headerlink" href="#benchmark" title="Permanent link">&para;</a></h1>
+<p>Comparison of <code>ConvexClusterer</code> against KMeans and DBSCAN on three standard
+synthetic datasets. The goal is to honestly document when it wins, when it loses, and why.</p>
 <hr />
-<h2 id="boosting">Boosting<a class="headerlink" href="#boosting" title="Permanent link">&para;</a></h2>
-<p>The <code>Boosting</code> class wraps <code>rfs_sparse</code> and <code>fastrfs_sparse</code> behind a
-scikit-learn-compatible <code>fit()</code> / <code>predict()</code> interface.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">convex_clustering</span><span class="w"> </span><span class="kn">import</span> <span class="n">Boosting</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">y</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">+</span> <span class="n">X</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.5</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">model</span> <span class="o">=</span> <span class="n">Boosting</span><span class="p">(</span><span class="n">algorithm</span><span class="o">=</span><span class="s2">&quot;FastRFS&quot;</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">coef_</span><span class="p">)</span>      <span class="c1"># sparse coefficient vector</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="n">y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</code></pre></div>
-<p><strong>Parameters:</strong></p>
+<h2 id="experimental-setup">Experimental Setup<a class="headerlink" href="#experimental-setup" title="Permanent link">&para;</a></h2>
+<p><strong>Datasets</strong>, three scikit-learn synthetic datasets with 200 points each:</p>
+<ul>
+<li><code>blobs</code> — three well-separated Gaussian clusters (cluster_std=0.8)</li>
+<li><code>moons</code> — two interleaved half-moons (noise=0.08)</li>
+<li><code>circles</code> — two concentric circles (noise=0.08, factor=0.5)</li>
+</ul>
+<p><strong>Preprocessing</strong> — <code>StandardScaler</code> applied to all three models before any
+computation. KMeans and DBSCAN are sensitive to scale by construction and ConvexClusterer also uses distances through the
+weight matrix W, so standardizing all three produces the fairest comparison.</p>
+<p><strong>Hyperparameters</strong> — each model receives its best known parameters for each
+dataset, like this the benchmark compares models at their best.</p>
+<p><strong>Metrics</strong>:</p>
+<ul>
+<li><strong>Silhouette</strong> ∈ [-1, 1] — measures intra-cluster cohesion vs inter-cluster
+  separation, the ideal value is 1. Undefined (reported as —) when only one cluster
+  is found.</li>
+<li><strong>Davies-Bouldin</strong> ∈ [0, ∞) — measures the average similarity between each
+  cluster and its most similar neighbor, the ideal value is 0.</li>
+<li><strong>Fit time</strong> — wall-clock seconds measured with <code>tracemalloc</code>.</li>
+<li><strong>Noise points</strong> — only relevant for DBSCAN (label -1).</li>
+</ul>
+<hr />
+<h2 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h2>
+<h3 id="blobs-well-separated-gaussian-clusters">blobs — well-separated Gaussian clusters<a class="headerlink" href="#blobs-well-separated-gaussian-clusters" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
-<th>Default</th>
-<th>Description</th>
+<th>Model</th>
+<th style="text-align: center;">Clusters found</th>
+<th style="text-align: center;">Silhouette</th>
+<th style="text-align: center;">Davies-Bouldin</th>
+<th style="text-align: center;">Time (s)</th>
+<th style="text-align: center;">Memory (MB)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>algorithm</code></td>
-<td><code>"FastRFS"</code></td>
-<td><code>"RFS"</code> or <code>"FastRFS"</code>. Same model, different computation.</td>
+<td>ConvexClusterer</td>
+<td style="text-align: center;"><strong>3</strong></td>
+<td style="text-align: center;"><strong>0.878</strong></td>
+<td style="text-align: center;"><strong>0.173</strong></td>
+<td style="text-align: center;">17.823</td>
+<td style="text-align: center;">2.22</td>
 </tr>
 <tr>
-<td><code>delta</code></td>
-<td><code>1.0</code></td>
-<td>L1 regularization strength. Must satisfy <code>step_size &lt; delta</code>.</td>
+<td>KMeans</td>
+<td style="text-align: center;"><strong>3</strong></td>
+<td style="text-align: center;"><strong>0.878</strong></td>
+<td style="text-align: center;"><strong>0.173</strong></td>
+<td style="text-align: center;">7.749</td>
+<td style="text-align: center;">0.24</td>
 </tr>
 <tr>
-<td><code>step_size</code></td>
-<td><code>0.01</code></td>
-<td>Step size for the coefficient update. Smaller → finer path.</td>
-</tr>
-<tr>
-<td><code>max_iter</code></td>
-<td><code>1000</code></td>
-<td>Number of iterations (no early stopping).</td>
+<td>DBSCAN</td>
+<td style="text-align: center;"><strong>3</strong></td>
+<td style="text-align: center;"><strong>0.878</strong></td>
+<td style="text-align: center;"><strong>0.173</strong></td>
+<td style="text-align: center;">0.013</td>
+<td style="text-align: center;">0.07</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Attributes after <code>fit()</code>:</strong></p>
-<ul>
-<li><code>coef_</code> — sparse coefficient vector of shape <code>(n_features,)</code>.</li>
-<li><code>n_iter_</code> — number of iterations run (always equals <code>max_iter</code>).</li>
-</ul>
+<p>All three models produce identical quality results. Well-separated Gaussian
+blobs is exactly the case KMeans was designed for, and all three converge to
+the same optimal solution.</p>
+<p>The difference is purely computational: DBSCAN at 0.013s, KMeans at 7.7s,
+ConvexClusterer at 17.8s. On simple, well-conditioned structure, convex
+clustering offers no quality advantage over the baselines.</p>
+<p><strong>Convex clustering advantage here:</strong> none in quality. The only structural
+difference is that ConvexClusterer discovered 3 clusters without being told —
+KMeans received <code>n_clusters=3</code> as input, an artificial advantage that would
+not exist in a real use case where k is unknown.</p>
 <hr />
-<h2 id="algorithm-details">Algorithm details<a class="headerlink" href="#algorithm-details" title="Permanent link">&para;</a></h2>
-<h3 id="rfs-regularized-forward-stagewise">RFS (Regularized Forward Stagewise)<a class="headerlink" href="#rfs-regularized-forward-stagewise" title="Permanent link">&para;</a></h3>
-<p>At each iteration, selects the feature with the largest absolute correlation
-with the current residual and takes a step of size <code>step_size</code> in that
-direction. Updates the residual and the coefficient simultaneously.</p>
-<h3 id="fastrfs-fast-regularized-forward-stagewise">FastRFS (Fast Regularized Forward Stagewise)<a class="headerlink" href="#fastrfs-fast-regularized-forward-stagewise" title="Permanent link">&para;</a></h3>
-<p>Avoids recomputing the full correlation vector at each step by maintaining
-a running update <code>gamma</code> that tracks correlations incrementally. Same
-asymptotic path as RFS, lower per-iteration cost when <code>n_features</code> is large.</p>
+<h3 id="moons-non-convex-geometry">moons — non-convex geometry<a class="headerlink" href="#moons-non-convex-geometry" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align: center;">Clusters found</th>
+<th style="text-align: center;">Noise</th>
+<th style="text-align: center;">Silhouette</th>
+<th style="text-align: center;">Davies-Bouldin</th>
+<th style="text-align: center;">Time (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ConvexClusterer</td>
+<td style="text-align: center;"><strong>2</strong></td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0.379</td>
+<td style="text-align: center;">1.028</td>
+<td style="text-align: center;">0.036</td>
+</tr>
+<tr>
+<td>KMeans</td>
+<td style="text-align: center;"><strong>2</strong></td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0.489</td>
+<td style="text-align: center;">0.813</td>
+<td style="text-align: center;">0.082</td>
+</tr>
+<tr>
+<td>DBSCAN</td>
+<td style="text-align: center;">14</td>
+<td style="text-align: center;">99</td>
+<td style="text-align: center;">0.620</td>
+<td style="text-align: center;">0.431</td>
+<td style="text-align: center;">0.008</td>
+</tr>
+</tbody>
+</table>
+<p>ConvexClusterer correctly finds 2 clusters but with low silhouette (0.379).
+The reason is geometric: the kNN graph with k=6 connects nearby points in
+Euclidean space, but the two moons overlap locally — points on one moon have
+Euclidean neighbors on the other. The fusion pressure from the regularizer
+acts on those cross-moon edges, pulling centers toward each other and
+producing final centers that do not reflect the true moon structure.</p>
+<p>KMeans achieves higher silhouette (0.489) with 2 correct clusters, but for
+the wrong reason: it divides the space with a vertical hyperplane, producing
+two left/right halves that have good internal cohesion by construction but do
+not correspond to the actual moons.</p>
+<p>DBSCAN fragments into 14 clusters with 99 noise points — <code>eps=0.15</code> is too
+strict for the density of this standardized dataset. Its silhouette of 0.620
+is high but misleading as it measures the quality of 14 micro-clusters, not of
+the 2 structural clusters.</p>
+<p><strong>Conclusion for moons:</strong> no model solves the problem cleanly with default
+parameters. Convex clustering has the right property (discovering k without
+input) but the Euclidean kNN weight function does not capture the moon
+structure. With a weight function that reflects local connectivity (e.g.,
+geodesic distance), convex clustering would improve substantially.</p>
 <hr />
-<h2 id="relationship-to-the-lasso">Relationship to the Lasso<a class="headerlink" href="#relationship-to-the-lasso" title="Permanent link">&para;</a></h2>
-<p>Both algorithms trace the <strong>incremental forward stagewise path</strong>, which
-converges to the Lasso solution path as <code>step_size → 0</code>. For small
-<code>step_size</code> (e.g. 0.001) and large <code>max_iter</code> (e.g. 10000), the resulting
-<code>coef_</code> approximates the Lasso solution at regularization strength <code>delta</code>.</p>
-<p>For an exact Lasso solution, use <code>sklearn.linear_model.Lasso</code>. <code>Boosting</code>
-is most useful when you want explicit control over the stepwise path or
-when the forward stagewise formulation maps naturally to your problem
-(as in the RF-S convex clustering variants).</p>
+<h3 id="circles-nested-geometry">circles — nested geometry<a class="headerlink" href="#circles-nested-geometry" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align: center;">Clusters found</th>
+<th style="text-align: center;">Noise</th>
+<th style="text-align: center;">Silhouette</th>
+<th style="text-align: center;">Davies-Bouldin</th>
+<th style="text-align: center;">Time (s)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ConvexClusterer</td>
+<td style="text-align: center;">1</td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">—</td>
+<td style="text-align: center;">0.036</td>
+</tr>
+<tr>
+<td>KMeans</td>
+<td style="text-align: center;"><strong>2</strong></td>
+<td style="text-align: center;">0</td>
+<td style="text-align: center;">0.352</td>
+<td style="text-align: center;">1.170</td>
+<td style="text-align: center;">0.095</td>
+</tr>
+<tr>
+<td>DBSCAN</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">153</td>
+<td style="text-align: center;">0.781</td>
+<td style="text-align: center;">0.266</td>
+<td style="text-align: center;">0.011</td>
+</tr>
+</tbody>
+</table>
+<p>The most demanding case. ConvexClusterer collapses all points into a single
+cluster as the knn graph is not a good way to diferenciate both circles, the nearest Euclidean neighbors of a
+point on the outer ring include both other outer-ring points and inner-ring
+points that are close in Euclidean distance. Fusion pressure distributes
+uniformly in all directions and the centers collapse to the global centroid.</p>
+<p>KMeans also fails to recover the true structure: it divides the circles into
+left/right hemispheres with low silhouette (0.352). DBSCAN with <code>eps=0.15</code>
+fragments into 7 micro-clusters with 153 noise points (76% of the dataset
+unassigned).</p>
+<p><strong>Conclusion for circles:</strong> no Euclidean distance-based method with reasonable
+parameters solves this problem correctly. Circles is a pathological case for
+Euclidean clustering in general — it requires kernel methods or feature space
+transformations regardless of the clustering algorithm.</p>
+<hr />
+<h2 id="summary">Summary<a class="headerlink" href="#summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Dataset</th>
+<th style="text-align: center;">Quality winner</th>
+<th style="text-align: center;">Speed winner</th>
+<th style="text-align: center;">ConvexClusterer discovers k</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>blobs</code></td>
+<td style="text-align: center;">Tie (all equal)</td>
+<td style="text-align: center;">DBSCAN</td>
+<td style="text-align: center;">✓ Yes</td>
+</tr>
+<tr>
+<td><code>moons</code></td>
+<td style="text-align: center;">None clearly</td>
+<td style="text-align: center;">DBSCAN</td>
+<td style="text-align: center;">✓ Yes</td>
+</tr>
+<tr>
+<td><code>circles</code></td>
+<td style="text-align: center;">None clearly</td>
+<td style="text-align: center;">DBSCAN</td>
+<td style="text-align: center;">No (total collapse)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>When to use convex clustering:</strong></p>
+<p>Convex clustering is the right choice when the number of clusters is unknown
+and an interpretable solution with convergence guarantees is required. The
+convex nature of the problem guarantees that the algorithm finds the global
+minimum. The cost is
+compute time: between 2× and 1000× slower than the baselines on these
+200-point datasets.</p>
+<p><strong>When not to use convex clustering:</strong></p>
+<p>When cluster geometry is non-convex and the Euclidean kNN graph does not
+capture the structural connectivity (the <code>circles</code> cases). In
+these cases, no Euclidean distance-based method works well without a feature
+space transformation. The limitation belongs to the Euclidean kNN weight
+function, not to convex clustering as a method.</p>
+<p><strong>The structural difference from the baselines:</strong></p>
+<p>KMeans requires <code>k</code> as input. DBSCAN requires <code>eps</code> and <code>min_samples</code>.
+ConvexClusterer requires <code>gamma</code>. All three require tuning — the difference
+is semantic: <code>gamma</code> controls regularization strength along a continuous
+solution path (from n clusters down to 1), while KMeans's <code>k</code> is a discrete
+decision with no path structure. This regularization path property is unique
+to convex clustering and enables systematic exploration of the solution space.</p>
+<hr />
+<h2 id="reproducibility">Reproducibility<a class="headerlink" href="#reproducibility" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Generate results and log to MLflow</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>python<span class="w"> </span>scripts/benchmark.py
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Inspect runs in the MLflow UI</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>mlflow<span class="w"> </span>ui<span class="w"> </span>--backend-store-uri<span class="w"> </span>sqlite:///mlflow.db
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="c1"># Navigate to http://localhost:5000 → experiment &quot;benchmark&quot;</span>
+</code></pre></div>
+<p>Results are saved to <code>results/benchmark/benchmark_results.csv</code>.
+MLflow runs are logged to the <code>benchmark</code> experiment inside <code>mlflow.db</code>.</p>
 
 
 
