@@ -59,6 +59,7 @@ nav:
   - User Guide:
     - Algorithms: algorithms.md
     - Regression: regression.md
+    - Benckmark: benchmark.md
   - API Reference:
     - Clustering: reference/clustering.md
     - Regression: reference/regression.md

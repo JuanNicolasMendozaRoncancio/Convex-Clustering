@@ -65,6 +65,7 @@ dev = [
     "mypy>=1.8",                
     "ipykernel>=6.29.5",           
     "ipython>=8.0",
+    "pandas>=2.0",
 ]
 
 
