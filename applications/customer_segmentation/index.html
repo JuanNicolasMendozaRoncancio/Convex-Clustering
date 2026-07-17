@@ -1,0 +1,1576 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Convex interpretable clustering via ADMM, AMA, Douglas-Rachford, and RF-S variants. Scikit-learn compatible.
+">
+      
+      
+        <meta name="author" content="Juan Nicolás Mendoza Roncancio">
+      
+      
+        <link rel="canonical" href="https://juannicolasmendozaroncancio.github.io/Convex-Clustering/applications/customer_segmentation/">
+      
+      
+        <link rel="prev" href="../../benchmark/">
+      
+      
+        <link rel="next" href="../../reference/clustering/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Customer Segmentation - Convex Clustering</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#customer-segmentation-via-rfm-analysis" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="Convex Clustering" class="md-header__button md-logo" aria-label="Convex Clustering" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Convex Clustering
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Customer Segmentation
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/JuanNicolasMendozaRoncancio/Convex-Clustering" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JuanNicolasMendozaRoncancio/Convex-Clustering
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../algorithms/" class="md-tabs__link">
+          
+  
+  
+  User Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  Applications
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../reference/clustering/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../api/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  REST API
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="Convex Clustering" class="md-nav__button md-logo" aria-label="Convex Clustering" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Convex Clustering
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/JuanNicolasMendozaRoncancio/Convex-Clustering" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    JuanNicolasMendozaRoncancio/Convex-Clustering
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../algorithms/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Algorithms
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../regression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../benchmark/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Benchmark
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Applications
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Applications
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customer Segmentation
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Customer Segmentation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-convex-clustering-for-customer-segmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why convex clustering for customer segmentation?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-and-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data and preprocessing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-1-clustering-in-3d-rfm-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1: Clustering in 3D RFM space
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Version 1: Clustering in 3D RFM space">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#segment-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Segment profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-2-pca-projection-clustering-in-2d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2: PCA projection + clustering in 2D
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Version 2: PCA projection + clustering in 2D">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pca-vs-umap-vs-t-sne" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PCA vs UMAP vs t-SNE
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pca-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PCA decomposition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#results_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-fusion-trajectory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The fusion trajectory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/clustering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Clustering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/regression/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Regression
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/utils/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Utilities
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    REST API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#why-convex-clustering-for-customer-segmentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why convex clustering for customer segmentation?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#data-and-preprocessing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Data and preprocessing
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-1-clustering-in-3d-rfm-space" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 1: Clustering in 3D RFM space
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Version 1: Clustering in 3D RFM space">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#results" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#segment-profiles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Segment profiles
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#version-2-pca-projection-clustering-in-2d" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Version 2: PCA projection + clustering in 2D
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Version 2: PCA projection + clustering in 2D">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pca-vs-umap-vs-t-sne" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PCA vs UMAP vs t-SNE
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pca-decomposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PCA decomposition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Parameters
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#results_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Results
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-fusion-trajectory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The fusion trajectory
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#comparison" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Comparison
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#reproducibility" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reproducibility
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="customer-segmentation-via-rfm-analysis">Customer Segmentation via RFM Analysis<a class="headerlink" href="#customer-segmentation-via-rfm-analysis" title="Permanent link">&para;</a></h1>
+<p>Convex clustering applied to a real-world business problem: segmenting customers
+by purchasing behavior using <strong>RFM features</strong> — Recency (days since last purchase),
+Frequency (number of orders), and Monetary value (total spend in GBP).</p>
+<p>The dataset is derived from the
+<a href="https://archive.ics.uci.edu/dataset/352/online+retail">Online Retail Dataset (UCI, 2010–2011)</a>,
+a transactional record of a UK-based online retailer with ~500,000 invoices and
+4,338 unique customers after cleaning.</p>
+<hr />
+<h2 id="why-convex-clustering-for-customer-segmentation">Why convex clustering for customer segmentation?<a class="headerlink" href="#why-convex-clustering-for-customer-segmentation" title="Permanent link">&para;</a></h2>
+<p>The standard approach — k-means — requires specifying the number of segments
+upfront. In practice, the right number of customer segments is not known a
+priori: it depends on the regularization strength, not a fixed discrete choice.</p>
+<p>As γ increases from 0 the convex clustering approach produces a <strong>continuous regularization path</strong>, points on the same connected component progressively fuse until a single cluster remains. The analyst
+chooses γ to select the resolution level that best matches the business question, without committing to a fixed k before seeing the data.</p>
+<hr />
+<h2 id="data-and-preprocessing">Data and preprocessing<a class="headerlink" href="#data-and-preprocessing" title="Permanent link">&para;</a></h2>
+<p><strong>Dataset:</strong> Online Retail (UCI), 4,338 customers after removing guest checkouts,
+cancellations, and negative quantities.</p>
+<p><strong>RFM features:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Definition</th>
+<th>Raw range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Recency</td>
+<td>Days since last purchase (lower = more recent)</td>
+<td>1–365 days</td>
+</tr>
+<tr>
+<td>Frequency</td>
+<td>Number of distinct invoices</td>
+<td>1–200 orders</td>
+</tr>
+<tr>
+<td>Monetary</td>
+<td>Total spend across all orders</td>
+<td>£1–£80,000</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Preprocessing pipeline:</strong></p>
+<ol>
+<li><strong>Winsorize at p99</strong> — caps outliers per feature without removing them.
+   The Online Retail dataset contains genuine wholesale buyers (500+ orders,
+   £50k+ spend).</li>
+<li><strong>StandardScaler</strong> — centers each feature at mean 0, std 1. Distance-based Without scaling, Monetary (range £0–£2,350 after winsorizing) would dominate Recency (range 1–359 days) entirely.</li>
+<li><strong>knn_w(k=5, phi=0.5)</strong> — builds the graph W connecting each customer to its 5 nearest neighbors in the scaled feature space, with edge weights
+   exp(-0.5 · d(i, j)).</li>
+</ol>
+<p><strong>Analysis subsample:</strong> 300 customers drawn with <code>random_state=42</code>. The full 4,338-customer dataset is computationally feasible with <code>run_experiment_job.py</code> and the Cloud Run infrastructure already in place. We use the 300-point subsample isused here for reproducibility on any machine.</p>
+<hr />
+<h2 id="version-1-clustering-in-3d-rfm-space">Version 1: Clustering in 3D RFM space<a class="headerlink" href="#version-1-clustering-in-3d-rfm-space" title="Permanent link">&para;</a></h2>
+<p>The first version runs <code>ConvexClusterer</code> directly on the three standardized RFM features, without any dimensionality reduction.</p>
+<p>The obtained cluster centers are coordinates in [Recency, Frequency, Monetary] space, which means they have
+direct business interpretation. The final segment profiles are readable by a marketing analyst without any decoding step.</p>
+<p><strong>Parameters:</strong> ADMM, γ = 7, ν = 0.5, max_iter = 10000, tol = 1e-4, merge_tol = 0.5.</p>
+<p>The γ value was selected by running a sweep over [1, 5, 7, 10, 20, 30] on the 300-point subsample. γ = 7 is the smallest value that consistently produces 3 clusters, while γ = 5 gave unstable results and γ = 10 collapsed to 2 clusters.</p>
+<h3 id="results">Results<a class="headerlink" href="#results" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clusters found</td>
+<td><strong>3</strong></td>
+</tr>
+<tr>
+<td>Iterations to convergence</td>
+<td>146</td>
+</tr>
+<tr>
+<td>Silhouette score</td>
+<td>0.491</td>
+</tr>
+<tr>
+<td>Davies-Bouldin score</td>
+<td>0.621</td>
+</tr>
+<tr>
+<td>Fit time</td>
+<td>142 s</td>
+</tr>
+</tbody>
+</table>
+<h3 id="segment-profiles">Segment profiles<a class="headerlink" href="#segment-profiles" title="Permanent link">&para;</a></h3>
+<p>Centers back-transformed to original RFM units:</p>
+<table>
+<thead>
+<tr>
+<th>Cluster</th>
+<th style="text-align: center;">Size</th>
+<th style="text-align: center;">Recency</th>
+<th style="text-align: center;">Frequency</th>
+<th style="text-align: center;">Monetary</th>
+<th>Business label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td style="text-align: center;">40 pts</td>
+<td style="text-align: center;">16 days</td>
+<td style="text-align: center;">47.8 orders</td>
+<td style="text-align: center;">£1,372</td>
+<td><strong>Champions</strong></td>
+</tr>
+<tr>
+<td>0</td>
+<td style="text-align: center;">202 pts</td>
+<td style="text-align: center;">115 days</td>
+<td style="text-align: center;">7.5 orders</td>
+<td style="text-align: center;">£401</td>
+<td><strong>Regulars</strong></td>
+</tr>
+<tr>
+<td>2</td>
+<td style="text-align: center;">58 pts</td>
+<td style="text-align: center;">299 days</td>
+<td style="text-align: center;">2.6 orders</td>
+<td style="text-align: center;">£108</td>
+<td><strong>At-Risk</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Champions</strong> (13% of sample): purchased 16 days ago on average, placed nearly
+48 orders, and spent £1,372 in total. These are the highest-value customers,
+retention and loyalty programs should target this group.</p>
+<p><strong>Regulars</strong> (67% of sample): the bulk of the customer base. Moderate recency
+(115 days), low-to-medium frequency (7.5 orders), and mid-range spend (£401).
+Standard engagement campaigns apply.</p>
+<p><strong>At-Risk</strong> (19% of sample): last purchased 299 days ago, placed only 2.6 orders,
+and spent £108. These are churning or already inactive customers. Win-back
+campaigns with strong incentives are appropriate here.</p>
+<hr />
+<h2 id="version-2-pca-projection-clustering-in-2d">Version 2: PCA projection + clustering in 2D<a class="headerlink" href="#version-2-pca-projection-clustering-in-2d" title="Permanent link">&para;</a></h2>
+<p>The second version applies PCA to 2 dimensions before clustering. The motivation is purely visual: 2D centers can be plotted directly, and the <strong>fusion trajectory</strong> becomes visible.</p>
+<h3 id="pca-vs-umap-vs-t-sne">PCA vs UMAP vs t-SNE<a class="headerlink" href="#pca-vs-umap-vs-t-sne" title="Permanent link">&para;</a></h3>
+<p>UMAP and t-SNE optimize for local neighborhood preservation in the embedding,
+which produces visually compelling plots but distorts inter-cluster distances.
+Running ConvexClusterer in a UMAP embedding means clustering a distorted
+representation of the data, therefore, the resulting labels may look clean in 2D but
+do not correspond to meaningful partitions of the original feature space.</p>
+<p>PCA is a linear projection. The resulting coordinates are weighted sums of the
+original features, which preserves distance structure up
+to the variance lost in the discarded components.</p>
+<h3 id="pca-decomposition">PCA decomposition<a class="headerlink" href="#pca-decomposition" title="Permanent link">&para;</a></h3>
+<p>Two principal components explain <strong>85.8%</strong> of the total variance in the
+standardized RFM features:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th style="text-align: center;">R loading</th>
+<th style="text-align: center;">F loading</th>
+<th style="text-align: center;">M loading</th>
+<th style="text-align: center;">Variance explained</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PC1</td>
+<td style="text-align: center;">−0.571</td>
+<td style="text-align: center;">+0.581</td>
+<td style="text-align: center;">+0.580</td>
+<td style="text-align: center;">70.3%</td>
+</tr>
+<tr>
+<td>PC2</td>
+<td style="text-align: center;">+0.821</td>
+<td style="text-align: center;">+0.374</td>
+<td style="text-align: center;">+0.432</td>
+<td style="text-align: center;">15.5%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>PC1</strong> is a contrast between Recency and (Frequency + Monetary): high PC1
+values indicate high-value recent customers (Champions); low PC1 values indicate
+lapsed, low-spend customers (At-Risk). This is the primary axis of customer
+value in RFM space.</p>
+<p><strong>PC2</strong> is dominated by Recency with same-sign contributions from F and M:
+it separates customers by how "recently active" they are relative to their
+spend level.</p>
+<h3 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h3>
+<p>ADMM, γ = 10, ν = 0.5, max_iter = 1000, tol = 1e-4, merge_tol = 0.5.
+γ was calibrated independently on the 2D space: γ = 10 gives 3 clusters with
+the highest silhouette on this representation.</p>
+<h3 id="results_1">Results<a class="headerlink" href="#results_1" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clusters found</td>
+<td><strong>3</strong></td>
+</tr>
+<tr>
+<td>Iterations to convergence</td>
+<td>331</td>
+</tr>
+<tr>
+<td>Silhouette score</td>
+<td>0.483</td>
+</tr>
+<tr>
+<td>Davies-Bouldin score</td>
+<td>0.584</td>
+</tr>
+<tr>
+<td>Fit time</td>
+<td>372 s</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-fusion-trajectory">The fusion trajectory<a class="headerlink" href="#the-fusion-trajectory" title="Permanent link">&para;</a></h3>
+<p>The key visualization enabled by the 2D reduction: each point represents a
+customer, and each center traces a path from its initial position (the data
+point itself at γ = 0) toward the final fused cluster center.</p>
+<p>As γ increases, customers that are close in PC1-PC2 spacemare progressively pulled together. The trajectory makes
+visible the <em>process</em> of cluster formation.
+This is the structural difference from k-means as there is no equivalent
+visualization for an algorithm that assigns labels without a continuous path.</p>
+<p>The <code>centers_hist_</code> attribute of <code>ConvexClusterer</code> stores this trajectory
+at every iteration, enabling replay of the full fusion process (as shown in
+the interactive dashboard).</p>
+<hr />
+<h2 id="comparison">Comparison<a class="headerlink" href="#comparison" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Version</th>
+<th style="text-align: center;">Dim</th>
+<th style="text-align: center;">γ</th>
+<th style="text-align: center;">Clusters</th>
+<th style="text-align: center;">Silhouette</th>
+<th style="text-align: center;">DB</th>
+<th style="text-align: center;">Interpretability</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>V1 — 3D RFM</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">7</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">0.491</td>
+<td style="text-align: center;">0.621</td>
+<td style="text-align: center;">Direct (RFM units)</td>
+</tr>
+<tr>
+<td>V2 — PCA 2D</td>
+<td style="text-align: center;">2</td>
+<td style="text-align: center;">10</td>
+<td style="text-align: center;">3</td>
+<td style="text-align: center;">0.483</td>
+<td style="text-align: center;">0.528</td>
+<td style="text-align: center;">Indirect (PC axes)</td>
+</tr>
+</tbody>
+</table>
+<p>Both versions find 3 clusters with comparable quality metrics. The small
+silhouette advantage of V2 (0.477 vs 0.464) reflects that PCA projection
+smooths out noise in the third dimension, making the 2D clusters tighter.</p>
+<p><strong>The versions serve different purposes:</strong></p>
+<ul>
+<li>V1 produces actionable segment profiles. The cluster centers are business
+  metrics that a marketing team can read directly.</li>
+<li>V2 enables geometric understanding of how the clustering algorithm works.
+  The fusion trajectory is the pedagogical artifact; the cluster assignments
+  are secondary.</li>
+</ul>
+<hr />
+<h2 id="reproducibility">Reproducibility<a class="headerlink" href="#reproducibility" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># Step 1 — generate the RFM dataset</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="c1">#   Option A: place data/online_retail.xlsx from UCI/Kaggle, then:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>python<span class="w"> </span>scripts/generate_rfm.py<span class="w"> </span>--source<span class="w"> </span>real
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1">#   Option B: use the synthetic fallback (default if file not found):</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>python<span class="w"> </span>scripts/generate_rfm.py<span class="w"> </span>--source<span class="w"> </span>synthetic
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="c1"># Step 2 — run the analysis and generate results/rfm/</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>python<span class="w"> </span>scripts/run_rfm_analysis.py
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Step 3 — inspect MLflow runs</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>mlflow<span class="w"> </span>ui<span class="w"> </span>--backend-store-uri<span class="w"> </span>sqlite:///mlflow.db
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Navigate to http://localhost:5000 → experiment &quot;rfm_segmentation&quot;</span>
+</code></pre></div>
+<p>Results are saved to <code>results/rfm/</code>:</p>
+<ul>
+<li><code>v1_metrics.json</code> — V1 segment profiles and quality metrics</li>
+<li><code>v2_metrics.json</code> — V2 metrics and PCA loadings</li>
+<li><code>v2_fusion_path.npy</code> — center trajectory (n_frames × n_points × 2)</li>
+<li><code>rfm_summary.csv</code> — combined metrics table</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
