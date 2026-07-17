@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-07-17T11:27:22.826422+00:00",
+  "source": "Synthetic RFM (mirrors Online Retail statistics)",
+  "n_customers": 4338,
+  "features": [
+    "Recency_days",
+    "Frequency_orders",
+    "Monetary_GBP"
+  ],
+  "random_state": 42,
+  "winsorization": {
+    "percentile": [
+      99.0,
+      99.0,
+      99.0
+    ],
+    "values": [
+      359.0,
+      75.0,
+      2349.5786901946667
+    ]
+  },
+  "s3_bucket": "convex-clustering-andes",
+  "s3_prefix": "datasets/rfm",
+  "files": {
+    "rfm_X.npy": "md5:1067b92c1e235d1e1f9816153124c061",
+    "rfm_y.npy": "md5:fbef46d5ce5fbacb21e403d901e464e4"
+  }
+}

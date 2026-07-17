@@ -1,0 +1,36 @@
+{
+  "version": "3D_RFM",
+  "algorithm": "ADMM",
+  "gamma": 7.0,
+  "n_customers": 300,
+  "n_clusters": 3,
+  "n_iter": 146,
+  "silhouette_score": 0.4906,
+  "davies_bouldin_score": 0.6213,
+  "fit_time_s": 142.873,
+  "peak_memory_mb": 4.067,
+  "pca_variance_explained": null,
+  "segment_profiles": [
+    {
+      "cluster": 0,
+      "n_points": 191,
+      "recency_days": 106.9,
+      "frequency_orders": 8.4,
+      "monetary_gbp": 417.2
+    },
+    {
+      "cluster": 1,
+      "n_points": 26,
+      "recency_days": 12.4,
+      "frequency_orders": 59.8,
+      "monetary_gbp": 1338.8
+    },
+    {
+      "cluster": 2,
+      "n_points": 83,
+      "recency_days": 285.6,
+      "frequency_orders": 2.5,
+      "monetary_gbp": 117.2
+    }
+  ]
+}
