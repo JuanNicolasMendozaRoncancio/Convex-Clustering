@@ -34,9 +34,6 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.metrics import davies_bouldin_score, silhouette_score
 from sklearn.preprocessing import StandardScaler
-from scipy.spatial.distance import cdist, pdist, squareform
-from scipy.sparse import csr_matrix
-from scipy.sparse.csgraph import connected_components
 
 from convex_clustering import ConvexClusterer
 from convex_clustering.utils import knn_w
@@ -68,7 +65,7 @@ def _segment_profiles(
     X_orig: npt.NDArray[np.float64],
     labels: npt.NDArray[np.intp],
     scaler: StandardScaler,
-) -> list[dict[str, object]]:
+) -> list[dict[str, float]]:
     """Return mean RFM in original (un-scaled) units per cluster."""
     profiles = []
     for seg in sorted(set(labels.tolist())):

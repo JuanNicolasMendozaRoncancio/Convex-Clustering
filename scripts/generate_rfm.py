@@ -140,7 +140,7 @@ def _generate_synthetic() -> tuple[npt.NDArray[np.float64], npt.NDArray[np.intp]
 
 
 def _preprocess(
-        X: npt.NDArrat[np.float64],
+        X: npt.NDArray[np.float64],
         winsor_pct: float = 0.99,
 ) -> tuple[npt.NDArray[np.float64], dict[str, list[float]]]:
     """
