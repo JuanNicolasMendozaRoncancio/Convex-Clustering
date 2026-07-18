@@ -1,0 +1,14 @@
+{
+  "version": "UMAP_2D",
+  "algorithm": "DR",
+  "gamma": 15000.0,
+  "merge_tol": 0.3,
+  "note": "UMAP -> Clustering in 2D",
+  "n_customers": 300,
+  "n_clusters": 3,
+  "n_iter": 32,
+  "silhouette_score": 0.5241,
+  "davies_bouldin_score": 0.5043,
+  "fit_time_s": 0.036,
+  "peak_memory_mb": 7.658
+}

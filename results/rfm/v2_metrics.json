@@ -1,14 +1,14 @@
 {
   "version": "2D_PCA",
   "algorithm": "DR",
-  "gamma": 50.0,
+  "gamma": 70.0,
   "n_customers": 300,
   "n_clusters": 3,
-  "n_iter": 31,
+  "n_iter": 25,
   "silhouette_score": 0.5399,
   "davies_bouldin_score": 0.5234,
-  "fit_time_s": 0.013,
-  "peak_memory_mb": 4.335,
+  "fit_time_s": 0.018,
+  "peak_memory_mb": 6.771,
   "pca_variance_explained": "0.714 + 0.154 = 0.867",
   "pca_components": {
     "PC1": {

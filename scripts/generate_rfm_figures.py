@@ -1,226 +1,317 @@
 """
-Generate static figures for docs/applications/customer_segmentation.md.
- 
-Outputs written to docs/applications/img/:
-  clusters_final.png      — final cluster assignment in PCA 2D space
-  fusion_trajectory.gif   — animation of center fusion across iterations
- 
-Run AFTER run_rfm_analysis.py (which generates results/rfm/v2_fusion_path.npy).
- 
+Generate figures for docs/applications/customer_segmentation.md.
+
+Produces 5 outputs in docs/applications/img/:
+  clusters_pca.png        — V2: final clusters in PCA 2D space
+  clusters_v3_umap.png    — V3: 3D clustering labels projected with UMAP
+  clusters_v4_umap.png    — V4: UMAP → clustering result
+  fusion_pca.gif          — V2: center fusion animation in PCA space
+  fusion_umap.gif         — V4: center fusion animation in UMAP space
+
+Run AFTER run_rfm_analysis.py (which populates data/).
+
 Usage:
     python scripts/generate_rfm_figures.py
 """
 from __future__ import annotations
- 
+
 import numpy as np
 import numpy.typing as npt
 from pathlib import Path
- 
-_DATA_DIR    = Path(__file__).parent.parent / "data"
-_IMG_DIR     = Path(__file__).parent.parent / "docs" / "applications" / "img"
- 
-# Segment labels in PC1 order (low PC1 = At-Risk, high PC1 = Champions)
+from typing import Any
+
+_DATA_DIR = Path(__file__).parent.parent / "data"
+_IMG_DIR  = Path(__file__).parent.parent / "docs" / "applications" / "img"
+
+# Cluster 0 = Regulars, 1 = Champions, 2 = At-Risk
 _SEG_NAMES  = {0: "Regulars", 1: "Champions", 2: "At-Risk"}
-_PALETTE     = ["#818cf8", "#34d399", "#f472b6"]
-_BG_COLOR    = "#0f1117"
-_TEXT_COLOR  = "#e0e0e0"
-_MUTED_COLOR = "#9ca3af"
-_SPINE_COLOR = "#1f2937"
- 
- 
-def _load_artifacts() -> tuple[
-    npt.NDArray[np.float64],
-    npt.NDArray[np.float64],
-    npt.NDArray[np.intp],
-    npt.NDArray[np.float64],
-    npt.NDArray[np.intp],
-]:
-    """Load clustering results produced by run_rfm_analysis.py."""
-    required = [
-        _DATA_DIR / "X_sub_2d.npy",
-        _DATA_DIR / "U_final_2d.npy",
-        _DATA_DIR / "labels_2d.npy",
-        _DATA_DIR / "fusion_path.npy",
-        _DATA_DIR / "hist_keys.npy",
+_PALETTE    = ["#818cf8", "#f472b6", "#34d399"]   # indigo, pink, teal
+_BG         = "#0f1117"
+_TEXT       = "#e0e0e0"
+_MUTED      = "#9ca3af"
+_SPINE      = "#1f2937"
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _load_arrays() -> dict[str, npt.NDArray[Any]]:
+    """Load all arrays produced by run_rfm_analysis.py."""
+    keys = [
+        "X_sub_2d", "U_final_2d", "labels_2d", "fusion_path", "hist_keys",
+        "X_sub_umap", "U_final_umap", "labels_umap",
+        "fusion_path_umap", "hist_keys_umap",
+        "labels_v1",
     ]
-    missing = [p for p in required if not p.exists()]
+    missing = [k for k in keys if not (_DATA_DIR / f"{k}.npy").exists()]
     if missing:
         raise FileNotFoundError(
-            f"Missing files: {missing}\n"
+            f"Missing arrays in data/: {missing}\n"
             "Run scripts/run_rfm_analysis.py first."
         )
-    return (
-        np.load(_DATA_DIR / "X_sub_2d.npy"),
-        np.load(_DATA_DIR / "U_final_2d.npy"),
-        np.load(_DATA_DIR / "labels_2d.npy"),
-        np.load(_DATA_DIR / "fusion_path.npy"),   # (n_frames, n_points, 2)
-        np.load(_DATA_DIR / "hist_keys.npy"),
-    )
- 
- 
-def _apply_dark_style(ax, fig) -> None:  # type: ignore[no-untyped-def]
-    fig.patch.set_facecolor(_BG_COLOR)
-    ax.set_facecolor(_BG_COLOR)
+    return {k: np.load(_DATA_DIR / f"{k}.npy") for k in keys}
+
+
+def _dark_ax(ax: Any, fig: Any) -> None:
+    fig.patch.set_facecolor(_BG)
+    ax.set_facecolor(_BG)
     ax.tick_params(colors="#6b7280", labelsize=8)
-    for spine in ax.spines.values():
-        spine.set_edgecolor(_SPINE_COLOR)
- 
- 
-def generate_static_png(
+    for sp in ax.spines.values():
+        sp.set_edgecolor(_SPINE)
+
+
+def _scatter_clusters(
+    ax: Any,
     X: npt.NDArray[np.float64],
-    U: npt.NDArray[np.float64],
     labels: npt.NDArray[np.intp],
-    out_path: Path,
+    centers: npt.NDArray[np.float64] | None = None,
+    alpha: float = 0.55,
+    s: int = 22,
 ) -> None:
-    """
-    Scatter plot of the final cluster assignment in PCA 2D space.
- 
-    Each point is a customer coloured by cluster label. White stars mark
-    the mean center of each cluster in the fused space.
-    """
-    import matplotlib.pyplot as plt
- 
-    fig, ax = plt.subplots(figsize=(7, 5.5))
-    _apply_dark_style(ax, fig)
- 
+    """Plot coloured scatter with optional cluster-center stars."""
     for lbl in sorted(set(labels.tolist())):
         mask = labels == lbl
         ax.scatter(
             X[mask, 0], X[mask, 1],
-            c=_PALETTE[lbl % len(_PALETTE)],
-            s=22, alpha=0.55, linewidths=0,
-            label=_SEG_NAMES.get(lbl, f"Cluster {lbl}"),
+            c=_PALETTE[lbl % len(_PALETTE)], s=s, alpha=alpha,
+            linewidths=0, label=_SEG_NAMES.get(lbl, f"Cluster {lbl}"),
         )
- 
-    # Mean center per cluster
-    unique_centers = np.array([
-        U[labels == lbl].mean(axis=0)
+    if centers is not None:
+        ax.scatter(
+            centers[:, 0], centers[:, 1],
+            c="white", s=130, marker="*", zorder=5,
+            edgecolors="#818cf8", linewidths=0.8, label="Cluster center",
+        )
+
+
+def _mean_centers(
+    X: npt.NDArray[np.float64],
+    labels: npt.NDArray[np.intp],
+) -> npt.NDArray[np.float64]:
+    return np.array([
+        X[labels == lbl].mean(axis=0)
         for lbl in sorted(set(labels.tolist()))
     ])
-    ax.scatter(
-        unique_centers[:, 0], unique_centers[:, 1],
-        c="white", s=130, marker="*", zorder=5,
-        edgecolors="#818cf8", linewidths=0.8, label="Cluster center",
-    )
- 
-    ax.set_xlabel(
-        "PC1  (Recency ↔ Frequency + Monetary)",
-        color=_MUTED_COLOR, fontsize=9,
-    )
-    ax.set_ylabel("PC2  (Recency dominance)", color=_MUTED_COLOR, fontsize=9)
-    ax.set_title(
-        "Customer Segmentation — Convex Clustering (PCA 2D)",
-        color=_TEXT_COLOR, fontsize=11, pad=10,
-    )
+
+
+def _save_legend(ax) -> None:  # type: ignore[no-untyped-def]
     ax.legend(
         framealpha=0.15, facecolor="#1a1d27",
-        edgecolor=_SPINE_COLOR, labelcolor=_TEXT_COLOR, fontsize=8,
+        edgecolor=_SPINE, labelcolor=_TEXT, fontsize=8,
     )
+
+
+# ---------------------------------------------------------------------------
+# Figure 1 — V2: PCA 2D clustering result
+# ---------------------------------------------------------------------------
+
+def fig_clusters_pca(
+    X_pca: npt.NDArray[np.float64],
+    U_pca: npt.NDArray[np.float64],
+    labels_pca: npt.NDArray[np.intp],
+    out_path: Path,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(7, 5.5))
+    _dark_ax(ax, fig)
+
+    centers = _mean_centers(U_pca, labels_pca)
+    _scatter_clusters(ax, X_pca, labels_pca, centers=centers)
+
+    ax.set_xlabel("PC1  (Recency ↔ Frequency + Monetary)", color=_MUTED, fontsize=9)
+    ax.set_ylabel("PC2  (Recency dominance)", color=_MUTED, fontsize=9)
+    ax.set_title("V2 — Customer Segmentation (PCA 2D, DR clustering)",
+                 color=_TEXT, fontsize=11, pad=10)
+    _save_legend(ax)
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, bbox_inches="tight", facecolor=_BG_COLOR)
+    fig.savefig(out_path, dpi=150, bbox_inches="tight", facecolor=_BG)
     plt.close()
-    print(f"PNG saved: {out_path}  ({out_path.stat().st_size // 1024} KB)")
- 
- 
-def generate_fusion_gif(
+    print(f"Saved: {out_path.name}  ({out_path.stat().st_size // 1024} KB)")
+
+
+# ---------------------------------------------------------------------------
+# Figure 2 — V3: 3D labels projected into UMAP
+# ---------------------------------------------------------------------------
+
+def fig_clusters_v3_umap(
+    X_umap: npt.NDArray[np.float64],
+    labels_v1: npt.NDArray[np.intp],
+    out_path: Path,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(7, 5.5))
+    _dark_ax(ax, fig)
+
+    centers = _mean_centers(X_umap, labels_v1)
+    _scatter_clusters(ax, X_umap, labels_v1, centers=centers)
+
+    ax.set_xlabel("UMAP 1", color=_MUTED, fontsize=9)
+    ax.set_ylabel("UMAP 2", color=_MUTED, fontsize=9)
+    ax.set_title("V3 — 3D Clustering Labels Projected with UMAP\n"
+                 "(clustering in 3D RFM space, UMAP for visualization only)",
+                 color=_TEXT, fontsize=10, pad=10)
+    _save_legend(ax)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150, bbox_inches="tight", facecolor=_BG)
+    plt.close()
+    print(f"Saved: {out_path.name}  ({out_path.stat().st_size // 1024} KB)")
+
+
+# ---------------------------------------------------------------------------
+# Figure 3 — V4: UMAP → clustering result
+# ---------------------------------------------------------------------------
+
+def fig_clusters_v4_umap(
+    X_umap: npt.NDArray[np.float64],
+    U_umap: npt.NDArray[np.float64],
+    labels_umap: npt.NDArray[np.intp],
+    out_path: Path,
+) -> None:
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots(figsize=(7, 5.5))
+    _dark_ax(ax, fig)
+
+    centers = _mean_centers(U_umap, labels_umap)
+    _scatter_clusters(ax, X_umap, labels_umap, centers=centers)
+
+    ax.set_xlabel("UMAP 1", color=_MUTED, fontsize=9)
+    ax.set_ylabel("UMAP 2", color=_MUTED, fontsize=9)
+    ax.set_title("V4 — Customer Segmentation (UMAP 2D, DR clustering)",
+                 color=_TEXT, fontsize=11, pad=10)
+    _save_legend(ax)
+    fig.tight_layout()
+    fig.savefig(out_path, dpi=150, bbox_inches="tight", facecolor=_BG)
+    plt.close()
+    print(f"Saved: {out_path.name}  ({out_path.stat().st_size // 1024} KB)")
+
+
+# ---------------------------------------------------------------------------
+# GIF helper — shared by V2 and V4
+# ---------------------------------------------------------------------------
+
+def _make_fusion_gif(
     X: npt.NDArray[np.float64],
     labels: npt.NDArray[np.intp],
-    path: npt.NDArray[np.float64],
-    keys: npt.NDArray[np.intp],
+    path: npt.NDArray[np.float64],      # (n_frames, n_points, 2)
+    keys: npt.NDArray[np.intp],         # iteration index per frame
     out_path: Path,
-    fps: int = 1,
-    skip: int = 1,
+    xlabel: str,
+    ylabel: str,
+    title: str,
+    fps: int = 8,
+    skip: int = 2,
 ) -> None:
-    """
-    Animated GIF of the center fusion trajectory.
- 
-    White dots represent the center assigned to each customer at iteration k.
-    As gamma increases (iterations progress), nearby centers are pulled together
-    until the three final clusters emerge.
- 
-    Parameters
-    ----------
-    skip : int
-        Use every `skip`-th frame to reduce GIF file size.
-    fps : int
-        Frames per second for the output GIF.
-    """
     import matplotlib.pyplot as plt
     from matplotlib.animation import FuncAnimation, PillowWriter
- 
-    frame_idx      = list(range(0, len(path), skip)) + [len(path) - 1]
+
+    frame_idx = list(range(0, len(path), skip)) + [len(path) - 1]
+    # deduplicate while preserving order
+    seen: set[int] = set()
+    frame_idx = [i for i in frame_idx if not (i in seen or seen.add(i))]  # type: ignore[func-returns-value]
     frames_centers = [path[i] for i in frame_idx]
-    frames_iters   = [keys[i] for i in frame_idx]
-    n_frames       = len(frames_centers)
-    print(f"GIF: {n_frames} frames at {fps} fps ...")
- 
+    frames_iters   = [int(keys[i]) for i in frame_idx]
+    print(f"GIF ({out_path.name}): {len(frames_centers)} frames at {fps} fps ...")
+
     fig, ax = plt.subplots(figsize=(6, 5))
-    _apply_dark_style(ax, fig)
- 
-    # Static background: data points coloured by final label
+    _dark_ax(ax, fig)
+
+    # Static background: final cluster assignment
     for lbl in sorted(set(labels.tolist())):
         mask = labels == lbl
-        ax.scatter(
-            X[mask, 0], X[mask, 1],
-            c=_PALETTE[lbl % len(_PALETTE)],
-            s=14, alpha=0.25, linewidths=0,
-        )
- 
-    scat      = ax.scatter([], [], c="white", s=8, alpha=0.85, zorder=4, linewidths=0)
-    iter_text = ax.text(
-        0.02, 0.97, "", transform=ax.transAxes,
-        color=_MUTED_COLOR, fontsize=8, va="top",
-    )
- 
-    margin = 0.3
+        ax.scatter(X[mask, 0], X[mask, 1],
+                   c=_PALETTE[lbl % len(_PALETTE)], s=14, alpha=0.25, linewidths=0)
+
+    scat = ax.scatter([], [], c="white", s=8, alpha=0.85, zorder=4, linewidths=0)
+    txt  = ax.text(0.02, 0.97, "", transform=ax.transAxes,
+                   color=_MUTED, fontsize=8, va="top")
+
+    margin = 0.4
     ax.set_xlim(X[:, 0].min() - margin, X[:, 0].max() + margin)
     ax.set_ylim(X[:, 1].min() - margin, X[:, 1].max() + margin)
-    ax.set_xlabel("PC1", color=_MUTED_COLOR, fontsize=8)
-    ax.set_ylabel("PC2", color=_MUTED_COLOR, fontsize=8)
-    ax.set_title(
-        "Fusion trajectory — centers converging",
-        color=_TEXT_COLOR, fontsize=10,
-    )
+    ax.set_xlabel(xlabel, color=_MUTED, fontsize=8)
+    ax.set_ylabel(ylabel, color=_MUTED, fontsize=8)
+    ax.set_title(title, color=_TEXT, fontsize=10)
     fig.tight_layout()
- 
-    def init():  # type: ignore[return]
+
+    def init() -> tuple[Any, Any]:
         scat.set_offsets(np.empty((0, 2)))
-        iter_text.set_text("")
-        return scat, iter_text
- 
-    def update(frame: int):  # type: ignore[return]
+        txt.set_text("")
+        return scat, txt
+
+    def update(frame: int) -> tuple[Any, Any]:
         scat.set_offsets(frames_centers[frame])
-        iter_text.set_text(f"iter {frames_iters[frame]}")
-        return scat, iter_text
- 
-    anim = FuncAnimation(
-        fig, update, frames=n_frames,
-        init_func=init, interval=1000 // fps, blit=True,
-    )
+        txt.set_text(f"iter {frames_iters[frame]}")
+        return scat, txt
+
+    anim = FuncAnimation(fig, update, frames=len(frames_centers),
+                         init_func=init, interval=1000 // fps, blit=True)
     anim.save(out_path, writer=PillowWriter(fps=fps))
     plt.close()
-    print(f"GIF saved: {out_path}  ({out_path.stat().st_size // 1024} KB)")
- 
- 
+    print(f"Saved: {out_path.name}  ({out_path.stat().st_size // 1024} KB)")
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
 def main() -> None:
     import matplotlib
-    matplotlib.use("Agg")   # non-interactive backend — safe on all platforms
- 
+    matplotlib.use("Agg")
+
     _IMG_DIR.mkdir(parents=True, exist_ok=True)
- 
-    X, U, labels, fusion_path, hist_keys = _load_artifacts()
- 
-    generate_static_png(
-        X, U, labels,
-        out_path=_IMG_DIR / "clusters_final.png",
+    d = _load_arrays()
+
+    # ── 3 static PNGs ──────────────────────────────────────────────────────
+    fig_clusters_pca(
+        X_pca      = d["X_sub_2d"],
+        U_pca      = d["U_final_2d"],
+        labels_pca = d["labels_2d"],
+        out_path   = _IMG_DIR / "clusters_pca.png",
     )
-    generate_fusion_gif(
-        X, labels, fusion_path, hist_keys,
-        out_path=_IMG_DIR / "fusion_trajectory.gif",
-        fps=2, skip=100,
+
+    fig_clusters_v3_umap(
+        X_umap    = d["X_sub_umap"],
+        labels_v1 = d["labels_v1"],
+        out_path  = _IMG_DIR / "clusters_v3_umap.png",
     )
-    print("\nAll figures generated. Commit docs/applications/img/ with the rest.")
- 
- 
+
+    fig_clusters_v4_umap(
+        X_umap      = d["X_sub_umap"],
+        U_umap      = d["U_final_umap"],
+        labels_umap = d["labels_umap"],
+        out_path    = _IMG_DIR / "clusters_v4_umap.png",
+    )
+
+    # ── 2 GIFs ─────────────────────────────────────────────────────────────
+    _make_fusion_gif(
+        X       = d["X_sub_2d"],
+        labels  = d["labels_2d"],
+        path    = d["fusion_path"],
+        keys    = d["hist_keys"],
+        out_path= _IMG_DIR / "fusion_pca.gif",
+        xlabel  = "PC1", ylabel = "PC2",
+        title   = "Fusion trajectory — PCA 2D (DR)",
+        fps=8, skip=1,
+    )
+
+    _make_fusion_gif(
+        X       = d["X_sub_umap"],
+        labels  = d["labels_umap"],
+        path    = d["fusion_path_umap"],
+        keys    = d["hist_keys_umap"],
+        out_path= _IMG_DIR / "fusion_umap.gif",
+        xlabel  = "UMAP 1", ylabel = "UMAP 2",
+        title   = "Fusion trajectory — UMAP 2D (DR)",
+        fps=8, skip=1,
+    )
+
+    print("\nAll 5 figures generated.")
+    print("Commit docs/applications/img/ together with the rest of step 20.")
+
+
 if __name__ == "__main__":
     main()

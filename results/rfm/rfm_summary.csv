@@ -1,3 +1,5 @@
 version,n_clusters,silhouette,davies_bouldin,fit_time_s,pca_variance
-V1 — 3D RFM,3,0.491,0.621,81.333,—
-V2 — PCA 2D,3,0.54,0.523,0.013,0.714 + 0.154 = 0.867
+V1 — 3D RFM,3,0.491,0.621,35.329,—
+V2 — PCA 2D,3,0.54,0.523,0.018,0.714 + 0.154 = 0.867
+CLUSTERING -> UMAP,3,0.491,0.621,—,UMAP (viz only)
+V4 — UMAP -> CLUSTERING,3,0.524,0.504,0.036,--

@@ -1,0 +1,10 @@
+{
+  "version": "UMAP_viz_of_3D",
+  "note": "Clustering performed in 3D RFM space (same as V1). UMAP used only for visualization.",
+  "umap_n_neighbors": 15,
+  "umap_min_dist": 0.1,
+  "n_customers": 300,
+  "n_clusters": 3,
+  "silhouette_score_3d": 0.4906,
+  "davies_bouldin_score_3d": 0.6213
+}

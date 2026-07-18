@@ -1,21 +1,27 @@
 """
 Customer segmentation via RFM analysis using ConvexClusterer.
- 
+
 Generates all numerical results and static visualizations used in
 docs/applications/customer_segmentation.md.
- 
-Two analysis versions:
+
+Four analysis versions:
   V1 — 3D RFM (Recency, Frequency, Monetary) without dimensionality reduction.
        Statistically correct. Centers are interpretable in business terms.
-  V2 — 2D PCA projection. Enables visualization of the center fusion trajectory —
-       the unique property of convex clustering not available in KMeans or DBSCAN.
- 
+  V2 — PCA 2D: projects to 2D then clusters. Enables fusion trajectory animation.
+  V3 — UMAP visualization: clusters in 3D (same as V1), projects with UMAP for
+       the figure only. Statistically honest — clustering never happens in UMAP space.
+  V4 — LDA 2D: projects via Linear Discriminant Analysis (maximizes inter-segment
+       separation), then clusters. Requires ground-truth labels — only valid for
+       synthetic data or a supervised pre-segmentation step.
+
 Outputs written to results/rfm/:
   v1_metrics.json       — V1 cluster metrics and segment profiles
-  v2_metrics.json       — V2 cluster metrics
-  v2_fusion_path.npy    — center trajectory across iterations (for docs figure)
-  rfm_summary.csv       — combined metrics table
- 
+  v2_metrics.json       — V2 metrics + PCA components
+  v3_metrics.json       — V3 metrics (same clusters as V1, UMAP for viz only)
+  v4_metrics.json       — V4 metrics + LDA components
+  v2_fusion_path.npy    — center trajectory across iterations (for docs GIF)
+  rfm_summary.csv       — combined metrics table for all four versions
+
 Usage:
     python scripts/run_rfm_analysis.py
     python scripts/run_rfm_analysis.py --n-customers 300  # subsample size
@@ -32,28 +38,33 @@ import numpy as np
 import numpy.typing as npt
 import pandas as pd
 from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.metrics import davies_bouldin_score, silhouette_score
 from sklearn.preprocessing import StandardScaler
-from scipy.spatial.distance import cdist, pdist, squareform
-from scipy.sparse import csr_matrix
+import umap
 
 from convex_clustering import ConvexClusterer
-from convex_clustering.viz import plot_graph_weights
 from convex_clustering.utils import knn_w
+from convex_clustering.viz import plot_graph_weights
 
-_DATA_DIR = Path(__file__).parent.parent / "data"
+_DATA_DIR    = Path(__file__).parent.parent / "data"
 _RESULTS_DIR = Path(__file__).parent.parent / "results" / "rfm"
 _IMG_DIR     = Path(__file__).parent.parent / "docs" / "applications" / "img"
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 def _load_rfm() -> tuple[npt.NDArray[np.float64], npt.NDArray[np.intp]]:
     x_path = _DATA_DIR / "rfm_X.npy"
     y_path = _DATA_DIR / "rfm_y.npy"
-    if not x_path.exists() or not y_path.exists():
+    if not x_path.exists():
         raise FileNotFoundError(
-            f"RFM data files not found in {_DATA_DIR}. "
-            "Please run `scripts/generate_rfm_data.py` first."
+            f"{x_path} not found. Run: python scripts/generate_rfm.py first."
         )
     return np.load(x_path), np.load(y_path)
+
 
 def _subsample(
     X: npt.NDArray[np.float64],
@@ -65,11 +76,12 @@ def _subsample(
     idx = rng.choice(len(X), min(n, len(X)), replace=False)
     return X[idx], y[idx], idx
 
+
 def _segment_profiles(
     X_orig: npt.NDArray[np.float64],
     labels: npt.NDArray[np.intp],
     scaler: StandardScaler,
-) -> list[dict[str, float]]:
+) -> list[dict[str, object]]:
     """Return mean RFM in original (un-scaled) units per cluster."""
     profiles = []
     for seg in sorted(set(labels.tolist())):
@@ -83,67 +95,81 @@ def _segment_profiles(
             "frequency_orders": round(float(center_orig[1]), 1),
             "monetary_gbp":   round(float(center_orig[2]), 1),
         })
-    return profiles
+    return profiles # type: ignore[return-value]
+
+
+# ---------------------------------------------------------------------------
+# Main analysis
+# ---------------------------------------------------------------------------
 
 def run_rfm_analysis(n_customers: int = 300) -> None:
     _RESULTS_DIR.mkdir(parents=True, exist_ok=True)
- 
+
     # ── Load & preprocess ──────────────────────────────────────────────────
     X_raw, y = _load_rfm()
     print(f"Dataset: {X_raw.shape[0]:,} customers")
- 
+
     scaler    = StandardScaler()
     X_scaled  = scaler.fit_transform(X_raw)
- 
+
     pca       = PCA(n_components=2, random_state=42)
     X_2d      = pca.fit_transform(X_scaled)
- 
+
     print(f"PCA variance explained: {pca.explained_variance_ratio_.round(3)}"
           f"  (cumulative {pca.explained_variance_ratio_.sum():.3f})")
- 
+
     X_sub, y_sub, idx = _subsample(X_scaled, y, n=n_customers)
     X_sub_2d           = X_2d[idx]
     print(f"Analysis subsample: {len(X_sub)} customers")
- 
-    W_3d = knn_w(X_sub,    k=5, phi=0.5)
-    W_2d = knn_w(X_sub_2d, k=5, phi=0.5)
-    plot_graph_weights(X_sub_2d, W_2d, title="Graph Weights (PCA 2D)")
 
- 
+    lda      = LinearDiscriminantAnalysis(n_components=2)
+    X_sub_lda = lda.fit_transform(X_sub, y_sub)
+    print(f"LDA variance explained: {lda.explained_variance_ratio_.round(3)}")
+
+    print("Fitting UMAP (for V3 visualization)...")
+    umap_reducer = umap.UMAP(n_components=2, n_neighbors=8, min_dist=0.5, random_state=42)
+    X_sub_umap   = umap_reducer.fit_transform(X_sub)
+
+    W_3d  = knn_w(X_sub,     k=5, phi=0.5)
+    W_2d  = knn_w(X_sub_2d,  k=5, phi=0.5)
+    W_umap = knn_w(X_sub_umap, k=6, phi=0.5)
+    plot_graph_weights(X_sub_2d, W_2d, title = "aaa")
+    plot_graph_weights(X_sub_umap, W_umap, title = "aaa")
+
     records: list[dict[str, object]] = []
- 
-    # ── 3D RFM ─────────────────────────────────────────────────
+
+    # ── VERSION 1: 3D RFM ─────────────────────────────────────────────────
     print("\n=== V1: 3D RFM (gamma=7, ADMM) ===")
     tracemalloc.start()
     t0 = time.perf_counter()
- 
+
     model_v1 = ConvexClusterer(
         algorithm  = "ADMM",
-        gamma      = 7,
+        gamma      = 7.0,
         step_size  = 0.5,
-        max_iter   = 500,
+        max_iter   = 1000,
         tol        = 1e-4,
         merge_tol  = 0.5,
     )
     model_v1.fit(X_sub, W_3d)
- 
+
     elapsed_v1 = time.perf_counter() - t0
     _, peak_v1 = tracemalloc.get_traced_memory()
     tracemalloc.stop()
- 
+
     lbl_v1  = model_v1.labels_
     k_v1    = len(set(lbl_v1.tolist()))
     sil_v1  = float(silhouette_score(X_sub, lbl_v1)) if k_v1 > 1 else -1.0
     db_v1   = float(davies_bouldin_score(X_sub, lbl_v1)) if k_v1 > 1 else -1.0
     profiles_v1 = _segment_profiles(X_sub, lbl_v1, scaler)
- 
+
     print(f"  n_clusters={k_v1},  iter={model_v1.n_iter_}")
     print(f"  Silhouette={sil_v1:.3f},  Davies-Bouldin={db_v1:.3f}")
     print(f"  Time={elapsed_v1:.2f}s,  Peak={peak_v1/1e6:.2f}MB")
     for p in profiles_v1:
         print(f"  Cluster {p['cluster']} ({p['n_points']} pts): "
               f"R={p['recency_days']}d  F={p['frequency_orders']}  M={p['monetary_gbp']} GBP")
- 
+
     v1_out = {
         "version": "3D_RFM",
         "algorithm": "ADMM",
@@ -160,7 +186,7 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
     }
     with open(_RESULTS_DIR / "v1_metrics.json", "w") as f:
         json.dump(v1_out, f, indent=2)
- 
+
     records.append({
         "version": "V1 — 3D RFM",
         "n_clusters": k_v1,
@@ -169,49 +195,54 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
         "fit_time_s": round(elapsed_v1, 3),
         "pca_variance": "—",
     })
- 
-    # ── PCA 2D ─────────────────────────────────────────────────
+
+    # ── VERSION 2: PCA 2D ─────────────────────────────────────────────────
     print("\n=== V2: PCA 2D (gamma=50, DR) ===")
     tracemalloc.start()
     t0 = time.perf_counter()
- 
+
     model_v2 = ConvexClusterer(
         algorithm  = "DR",
-        gamma      = 50,
+        gamma      = 70,
         step_size  = 0.5,
-        max_iter   = 500,
-        tol        = 1e-5,
+        max_iter   = 1000,
+        tol        = 1e-4,
         merge_tol  = 0.3,
     )
     model_v2.fit(X_sub_2d, W_2d)
- 
+
     elapsed_v2 = time.perf_counter() - t0
     _, peak_v2 = tracemalloc.get_traced_memory()
     tracemalloc.stop()
- 
+
     lbl_v2  = model_v2.labels_
     k_v2    = len(set(lbl_v2.tolist()))
     sil_v2  = float(silhouette_score(X_sub_2d, lbl_v2)) if k_v2 > 1 else -1.0
     db_v2   = float(davies_bouldin_score(X_sub_2d, lbl_v2)) if k_v2 > 1 else -1.0
- 
+
     print(f"  n_clusters={k_v2},  iter={model_v2.n_iter_}")
     print(f"  Silhouette={sil_v2:.3f},  Davies-Bouldin={db_v2:.3f}")
     print(f"  Time={elapsed_v2:.2f}s,  Peak={peak_v2/1e6:.2f}MB")
- 
+
     hist_keys = sorted(model_v2.centers_hist_.keys())
-    sample_keys = [k for k in hist_keys if k % 5 == 0] + [hist_keys[-1]]
+    sample_keys = [k for k in hist_keys if k % 1 == 0] + [hist_keys[-1]]
     fusion_path = np.stack(
         [model_v2.centers_hist_[k] for k in sample_keys], axis=0
-    )  
+    )  # shape (n_frames, n_points, 2)
     np.save(_RESULTS_DIR / "v2_fusion_path.npy", fusion_path)
     print(f"  Fusion path saved: {fusion_path.shape} (frames, points, dims)")
- 
+
+    # Save arrays needed by generate_rfm_figures.py
     _DATA_DIR.mkdir(parents=True, exist_ok=True)
     np.save(_DATA_DIR / "X_sub_2d.npy",     X_sub_2d)
     np.save(_DATA_DIR / "U_final_2d.npy",   model_v2.cluster_centers_)
     np.save(_DATA_DIR / "labels_2d.npy",    lbl_v2)
     np.save(_DATA_DIR / "fusion_path.npy",  fusion_path)
     np.save(_DATA_DIR / "hist_keys.npy",    np.array(sample_keys))
+
+    np.save(_DATA_DIR / "labels_v1.npy",    lbl_v1)
+    np.save(_DATA_DIR / "X_sub_umap.npy",   X_sub_umap)
+    np.save(_DATA_DIR / "X_sub_lda.npy",    X_sub_lda)
     print("  Figure arrays saved to data/")
 
     pca_var_str = (
@@ -219,11 +250,11 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
         f"{pca.explained_variance_ratio_[1]:.3f} = "
         f"{pca.explained_variance_ratio_.sum():.3f}"
     )
- 
+
     v2_out = {
         "version": "2D_PCA",
         "algorithm": "DR",
-        "gamma": 50.0,
+        "gamma": 70.0,
         "n_customers": len(X_sub_2d),
         "n_clusters": k_v2,
         "n_iter": model_v2.n_iter_,
@@ -243,7 +274,7 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
     }
     with open(_RESULTS_DIR / "v2_metrics.json", "w") as f:
         json.dump(v2_out, f, indent=2)
- 
+
     records.append({
         "version": "V2 — PCA 2D",
         "n_clusters": k_v2,
@@ -252,7 +283,111 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
         "fit_time_s": round(elapsed_v2, 3),
         "pca_variance": pca_var_str,
     })
- 
+
+    # ── VERSION 3: UMAP visualization of V1 labels ────────────────────────
+    print("\n=== V3: Cluster in 3D -> UMAP ===")
+    k_v3   = k_v1 
+    sil_v3 = float(silhouette_score(X_sub, lbl_v1)) if k_v3 > 1 else -1.0
+    db_v3  = float(davies_bouldin_score(X_sub, lbl_v1)) if k_v3 > 1 else -1.0
+    print(f"  n_clusters={k_v3}  (inherited from V1)")
+    print(f"  Silhouette={sil_v3:.3f},  Davies-Bouldin={db_v3:.3f}  (measured in 3D space)")
+
+    v3_out = {
+        "version": "UMAP_viz_of_3D",
+        "note": "Clustering performed in 3D RFM space (same as V1). UMAP used only for visualization.",
+        "umap_n_neighbors": 15,
+        "umap_min_dist": 0.1,
+        "n_customers": len(X_sub),
+        "n_clusters": k_v3,
+        "silhouette_score_3d": round(sil_v3, 4),
+        "davies_bouldin_score_3d": round(db_v3, 4),
+    }
+    with open(_RESULTS_DIR / "v3_metrics.json", "w") as f:
+        json.dump(v3_out, f, indent=2)
+
+    records.append({
+        "version": "CLUSTERING -> UMAP",
+        "n_clusters": k_v3,
+        "silhouette": round(sil_v3, 3),
+        "davies_bouldin": round(db_v3, 3),
+        "fit_time_s": "—",
+        "pca_variance": "UMAP (viz only)",
+    })
+
+    # ── VERSION 4: UMAP -> Cluser in 2D ──────────────────────────────────────
+    print("\n=== V4: UMAP -> Cluser in 2D ===")
+    tracemalloc.start()
+    t0 = time.perf_counter()
+
+    model_v4 = ConvexClusterer(
+        algorithm  = "DR",
+        gamma      = 15000,
+        step_size  = 0.5,
+        max_iter   = 1000,
+        tol        = 1e-4,
+        merge_tol  = 0.3,
+    )
+    model_v4.fit(X_sub_umap, W_umap)
+
+    elapsed_v4 = time.perf_counter() - t0
+    _, peak_v4 = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    lbl_v4 = model_v4.labels_
+    k_v4   = len(set(lbl_v4.tolist()))
+    sil_v4 = float(silhouette_score(X_sub_umap, lbl_v4)) if k_v4 > 1 else -1.0
+    db_v4  = float(davies_bouldin_score(X_sub_umap, lbl_v4)) if k_v4 > 1 else -1.0
+
+    print(f"  n_clusters={k_v4},  iter={model_v4.n_iter_}")
+    print(f"  Silhouette={sil_v4:.3f},  Davies-Bouldin={db_v4:.3f}")
+    print(f"  Time={elapsed_v4:.2f}s,  Peak={peak_v4/1e6:.2f}MB")
+
+    hist_keys = sorted(model_v4.centers_hist_.keys())
+    sample_keys = [k for k in hist_keys if k % 1 == 0] + [hist_keys[-1]]
+    fusion_path = np.stack(
+        [model_v4.centers_hist_[k] for k in sample_keys], axis=0
+    )  # shape (n_frames, n_points, 2)
+    np.save(_RESULTS_DIR / "v4_fusion_path.npy", fusion_path)
+    print(f"  Fusion path saved: {fusion_path.shape} (frames, points, dims)")
+
+    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    np.save(_DATA_DIR / "X_sub_umap.npy",   X_sub_umap)
+    np.save(_DATA_DIR / "U_final_umap.npy", model_v4.cluster_centers_)
+    np.save(_DATA_DIR / "labels_umap.npy",  lbl_v4)
+    np.save(_DATA_DIR / "fusion_path_umap.npy",  fusion_path)
+    np.save(_DATA_DIR / "hist_keys_umap.npy",    np.array(sample_keys))
+
+    np.save(_DATA_DIR / "labels_v4.npy",    lbl_v4)
+    np.save(_DATA_DIR / "X_sub_umap.npy",   X_sub_umap)
+    np.save(_DATA_DIR / "X_sub_lda.npy",    X_sub_lda)
+    print("  Figure arrays saved to data/")
+
+    v4_out = {
+        "version": "UMAP_2D",
+        "algorithm": "DR",
+        "gamma": 15000.0,
+        "merge_tol": 0.3,
+        "note": "UMAP -> Clustering in 2D",
+        "n_customers": len(X_sub_umap),
+        "n_clusters": k_v4,
+        "n_iter": model_v4.n_iter_,
+        "silhouette_score": round(sil_v4, 4),
+        "davies_bouldin_score": round(db_v4, 4),
+        "fit_time_s": round(elapsed_v4, 3),
+        "peak_memory_mb": round(peak_v4 / 1e6, 3),
+    }
+    with open(_RESULTS_DIR / "v4_metrics.json", "w") as f:
+        json.dump(v4_out, f, indent=2)
+
+    records.append({
+        "version": "V4 — UMAP -> CLUSTERING",
+        "n_clusters": k_v4,
+        "silhouette": round(sil_v4, 3),
+        "davies_bouldin": round(db_v4, 3),
+        "fit_time_s": round(elapsed_v4, 3),
+        "pca_variance": "--",
+    })
+
     # ── Summary CSV ────────────────────────────────────────────────────────
     df = pd.DataFrame(records)
     csv_path = _RESULTS_DIR / "rfm_summary.csv"
@@ -266,8 +401,8 @@ def _parse_args() -> argparse.Namespace:
     p.add_argument("--n-customers", type=int, default=300,
                    help="Subsample size for analysis (default: 300)")
     return p.parse_args()
- 
- 
+
+
 if __name__ == "__main__":
     args = _parse_args()
     run_rfm_analysis(n_customers=args.n_customers)
