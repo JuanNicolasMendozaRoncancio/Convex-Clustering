@@ -297,7 +297,9 @@ Documentation deploys automatically to GitHub Pages via `.github/workflows/docs.
 
 **Juan Nicolás Mendoza Roncancio**
 Mathematics — Universidad Nacional de Colombia - Bogotá, Colombia
+
 M.Sc. in Applied Mathematics, AI & Engineering (Diplôme d'Ingénieur) — Mines Paris PSL - Paris, France
+
 M.Sc. in Mathematics – Statistics, Machine Learning and Algorithms - Sorbonne Université - Paris, France
 
 [GitHub](https://github.com/JuanNicolasMendozaRoncancio) · [Documentation](https://juannicolasmendozaroncancio.github.io/Convex-Clustering/) · [Dashboard](https://convex-clustering-jnmr.streamlit.app)
