@@ -7,8 +7,8 @@
   "n_iter": 146,
   "silhouette_score": 0.4906,
   "davies_bouldin_score": 0.6213,
-  "fit_time_s": 142.873,
-  "peak_memory_mb": 4.067,
+  "fit_time_s": 81.333,
+  "peak_memory_mb": 4.026,
   "pca_variance_explained": null,
   "segment_profiles": [
     {

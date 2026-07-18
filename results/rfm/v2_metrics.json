@@ -1,14 +1,14 @@
 {
   "version": "2D_PCA",
-  "algorithm": "ADMM",
-  "gamma": 10.0,
+  "algorithm": "DR",
+  "gamma": 50.0,
   "n_customers": 300,
-  "n_clusters": 4,
-  "n_iter": 331,
-  "silhouette_score": 0.4833,
-  "davies_bouldin_score": 0.5843,
-  "fit_time_s": 372.575,
-  "peak_memory_mb": 4.337,
+  "n_clusters": 3,
+  "n_iter": 31,
+  "silhouette_score": 0.5399,
+  "davies_bouldin_score": 0.5234,
+  "fit_time_s": 0.013,
+  "peak_memory_mb": 4.335,
   "pca_variance_explained": "0.714 + 0.154 = 0.867",
   "pca_components": {
     "PC1": {

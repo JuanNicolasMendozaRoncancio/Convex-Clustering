@@ -34,12 +34,16 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.metrics import davies_bouldin_score, silhouette_score
 from sklearn.preprocessing import StandardScaler
+from scipy.spatial.distance import cdist, pdist, squareform
+from scipy.sparse import csr_matrix
 
 from convex_clustering import ConvexClusterer
+from convex_clustering.viz import plot_graph_weights
 from convex_clustering.utils import knn_w
 
 _DATA_DIR = Path(__file__).parent.parent / "data"
 _RESULTS_DIR = Path(__file__).parent.parent / "results" / "rfm"
+_IMG_DIR     = Path(__file__).parent.parent / "docs" / "applications" / "img"
 
 def _load_rfm() -> tuple[npt.NDArray[np.float64], npt.NDArray[np.intp]]:
     x_path = _DATA_DIR / "rfm_X.npy"
@@ -84,6 +88,7 @@ def _segment_profiles(
 def run_rfm_analysis(n_customers: int = 300) -> None:
     _RESULTS_DIR.mkdir(parents=True, exist_ok=True)
  
+    # ── Load & preprocess ──────────────────────────────────────────────────
     X_raw, y = _load_rfm()
     print(f"Dataset: {X_raw.shape[0]:,} customers")
  
@@ -102,6 +107,8 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
  
     W_3d = knn_w(X_sub,    k=5, phi=0.5)
     W_2d = knn_w(X_sub_2d, k=5, phi=0.5)
+    plot_graph_weights(X_sub_2d, W_2d, title="Graph Weights (PCA 2D)")
+
  
     records: list[dict[str, object]] = []
  
@@ -112,9 +119,9 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
  
     model_v1 = ConvexClusterer(
         algorithm  = "ADMM",
-        gamma      = 7.0,
+        gamma      = 7,
         step_size  = 0.5,
-        max_iter   = 10000,
+        max_iter   = 500,
         tol        = 1e-4,
         merge_tol  = 0.5,
     )
@@ -164,17 +171,17 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
     })
  
     # ── PCA 2D ─────────────────────────────────────────────────
-    print("\n=== V2: PCA 2D (gamma=10, ADMM) ===")
+    print("\n=== V2: PCA 2D (gamma=50, DR) ===")
     tracemalloc.start()
     t0 = time.perf_counter()
  
     model_v2 = ConvexClusterer(
-        algorithm  = "ADMM",
-        gamma      = 10.0,
+        algorithm  = "DR",
+        gamma      = 50,
         step_size  = 0.5,
-        max_iter   = 10000,
-        tol        = 1e-4,
-        merge_tol  = 0.5,
+        max_iter   = 500,
+        tol        = 1e-5,
+        merge_tol  = 0.3,
     )
     model_v2.fit(X_sub_2d, W_2d)
  
@@ -199,6 +206,14 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
     np.save(_RESULTS_DIR / "v2_fusion_path.npy", fusion_path)
     print(f"  Fusion path saved: {fusion_path.shape} (frames, points, dims)")
  
+    _DATA_DIR.mkdir(parents=True, exist_ok=True)
+    np.save(_DATA_DIR / "X_sub_2d.npy",     X_sub_2d)
+    np.save(_DATA_DIR / "U_final_2d.npy",   model_v2.cluster_centers_)
+    np.save(_DATA_DIR / "labels_2d.npy",    lbl_v2)
+    np.save(_DATA_DIR / "fusion_path.npy",  fusion_path)
+    np.save(_DATA_DIR / "hist_keys.npy",    np.array(sample_keys))
+    print("  Figure arrays saved to data/")
+
     pca_var_str = (
         f"{pca.explained_variance_ratio_[0]:.3f} + "
         f"{pca.explained_variance_ratio_[1]:.3f} = "
@@ -207,8 +222,8 @@ def run_rfm_analysis(n_customers: int = 300) -> None:
  
     v2_out = {
         "version": "2D_PCA",
-        "algorithm": "ADMM",
-        "gamma": 10.0,
+        "algorithm": "DR",
+        "gamma": 50.0,
         "n_customers": len(X_sub_2d),
         "n_clusters": k_v2,
         "n_iter": model_v2.n_iter_,

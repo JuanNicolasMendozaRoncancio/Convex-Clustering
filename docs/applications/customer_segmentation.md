@@ -144,6 +144,15 @@ the highest silhouette on this representation.
 | Davies-Bouldin score | 0.584 |
 | Fit time | 372 s |
 
+### Final cluster assignment
+ 
+![Customer segmentation in PCA 2D space](img/clusters_final.png)
+ 
+Three segments emerge without specifying k upfront. The horizontal axis (PC1)
+separates high-value recent customers (right) from lapsed low-spend customers
+(left). The vertical axis (PC2) captures residual Recency variance within each
+group. White stars mark the mean center of each fused cluster.
+
 ### The fusion trajectory
 
 The key visualization enabled by the 2D reduction: each point represents a
@@ -154,6 +163,15 @@ As γ increases, customers that are close in PC1-PC2 spacemare progressively pul
 visible the *process* of cluster formation.
 This is the structural difference from k-means as there is no equivalent
 visualization for an algorithm that assigns labels without a continuous path.
+
+![Fusion trajectory animation](img/fusion_trajectory.gif)
+ 
+Each white dot is the center assigned to one customer. Over 236 iterations,
+300 individual centers progressively fuse into three stable groups — the same
+three segments identified in V1. The background color of each point shows its
+final cluster assignment, making it easy to see which regions converge first
+(Champions and At-Risk, being more isolated, fuse fastest; the large Regular
+segment takes longer to consolidate).
 
 The `centers_hist_` attribute of `ConvexClusterer` stores this trajectory
 at every iteration, enabling replay of the full fusion process (as shown in
